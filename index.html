@@ -451,6 +451,7 @@
         </div>
     </div>
 
+    <!-- 로그 모니터링 모달 -->
     <div id="logs-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm h-[80vh] flex flex-col overflow-hidden border-4 border-blue-500">
             <div class="bg-blue-600 px-5 py-4 flex justify-between items-center shrink-0">
@@ -461,6 +462,7 @@
         </div>
     </div>
 
+    <!-- 어트랙션 가이드북 모달 -->
     <div id="guidebook-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm max-h-[80vh] flex flex-col overflow-hidden border-4 border-blue-500">
             <div class="bg-blue-600 px-5 py-4 flex justify-between items-center shrink-0">
@@ -476,13 +478,14 @@
         </div>
     </div>
 
+    <!-- 토스트 알림창 -->
     <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-full font-bold text-sm opacity-0 pointer-events-none transition-opacity duration-300 z-50 shadow-xl flex items-center gap-2 border border-gray-600 whitespace-nowrap">
         <span class="text-lg">✨</span> <span id="toast-msg">저장 완료</span>
     </div>
 
     <script type="module">
         
-        // ★★★ 여기에 구글 앱스 스크립트 웹앱 주소(배포 주소)를 넣으세요! ★★★
+        // ★★★ 여기에 선생님께서 만드신 구글 앱스 스크립트 웹앱 주소를 덮어씌워 주세요! ★★★
         const SERVER_URL = "https://script.google.com/macros/s/AKfycbzQq4NzpDippClRQX3CTq1OOKak2djcNX1OO-KimpODeV9JWtrA67w20d8BUT7S7eIM/exec"; 
 
         window.appData = {}; 
@@ -505,7 +508,7 @@
             { icon: '💦', text: '젖은 모습' }, { icon: '🐾', text: '동물 셀카' }, { icon: '👯', text: '똑같은 포즈' }, { icon: '👑', text: '조장 몰아주기' }
         ];
 
-        // 🌟 최신화된 학생 명단 (결석, 전출, 유예 완벽 제외)
+        // 🌟 최신화된 학생 명단 (결석, 전출, 유예 완벽 제외됨)
         const ROSTERS = {
             "2-1": ["김지민","신태희","신현미","안해빈","윤현서","이가흔","이다은","이시우","이예은","전하린","조수아","최서아","한다연","강지훈","고승민","곽도훈","김도경","김준범","나윤오","배다니엘","손권휘","심지민","이상현","임현서","한지완","허정우","황하준"],
             "2-2": ["김가윤","김규린","김채원","김태연","나윤서","신하린","안성연","안예빈","오연우","이진명","이하늬","최영주","하다은","고민서","김오현","김우빈","김우찬","김주현","김준서","김태완","민규홍","신이준","임태율","전율","정창근","허태준"],
@@ -527,7 +530,7 @@
                 const saved = localStorage.getItem(`everland_${cName}`);
                 if (saved) { try { window.appData[cName] = JSON.parse(saved); } catch(e) {} }
                 if(!window.appData[cName]) window.appData[cName] = { password: '', teacherPassword: '0000', students: [], groups: [], busSeats: {}, icebreakers: {}, logs: [] };
-                if (!window.appData[cName].teacherPassword) window.appData[cName].teacherPassword = '0000';
+                if (!window.appData[cName]?.teacherPassword) window.appData[cName].teacherPassword = '0000';
             }
             if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
 
@@ -558,8 +561,8 @@
             }
 
             for (let cName in ROSTERS) {
-                if(!window.appData[cName].students) window.appData[cName].students = [];
-                if(window.appData[cName].students.length === 0 && window.appData[cName].groups.length === 0) {
+                if(!window.appData[cName]?.students) window.appData[cName].students = [];
+                if(window.appData[cName]?.students.length === 0 && window.appData[cName]?.groups.length === 0) {
                     window.appData[cName].students = [...ROSTERS[cName]];
                 }
             }
@@ -601,7 +604,7 @@
         }
 
         window.addLog = (action) => {
-            if(!window.appData[window.currentClass].logs) window.appData[window.currentClass].logs = [];
+            if(!window.appData[window.currentClass]?.logs) window.appData[window.currentClass].logs = [];
             const now = new Date();
             const timeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
             window.appData[window.currentClass].logs.unshift({
@@ -612,20 +615,13 @@
         };
 
         window.showView = (viewName) => {
-            ['home', 'login', 'main'].forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                if(el) el.classList.add('hidden-view');
-            });
-            
-            const targetView = document.getElementById(`view-${viewName}`);
-            if(targetView) targetView.classList.remove('hidden-view');
+            ['home', 'login', 'main'].forEach(v => document.getElementById(`view-${v}`)?.classList.add('hidden-view'));
+            document.getElementById(`view-${viewName}`)?.classList.remove('hidden-view');
             
             if(viewName === 'home') {
                 window.currentClass = null;
                 window.isTeacher = false;
-                const badge = document.getElementById('teacher-mode-badge');
-                if(badge) badge.classList.add('hidden');
-                
+                document.getElementById('teacher-mode-badge')?.classList.add('hidden');
                 const navContest = document.getElementById('nav-contest');
                 if(navContest) {
                     navContest.classList.add('hidden');
@@ -636,7 +632,6 @@
 
         window.attemptEnterClass = (cName) => {
             window.currentClass = cName;
-            
             const titleEl = document.getElementById('login-title');
             if(titleEl) titleEl.innerText = `${cName} 입장`;
             
@@ -658,6 +653,11 @@
             }
             
             showView('login');
+
+            // 스마트폰 키보드 자동 팝업 처리
+            setTimeout(() => {
+                if(nameEl) nameEl.focus();
+            }, 100);
         };
 
         window.loginClass = () => {
@@ -665,14 +665,14 @@
             const name = nameEl ? nameEl.value.trim() : '';
             if(!name) return showToast("본인의 이름을 반드시 입력해주세요!");
             
-            // ★ 서민지 선생님 마스터키 (비번 무시하고 통과)
+            // ★ 마스터키 (비번 무시하고 통과)
             if(name === "서민지") {
                 window.currentUser = name;
                 addLog(`총괄 선생님이 마스터 권한으로 접속했습니다.`);
                 return enterClass();
             }
 
-            if(window.appData[window.currentClass].password) {
+            if(window.appData[window.currentClass]?.password) {
                 const pwEl = document.getElementById('login-password');
                 const pw = pwEl ? pwEl.value : '';
                 if(window.appData[window.currentClass].password !== pw) {
@@ -695,16 +695,11 @@
         window.switchTab = (tabName) => {
             activeTab = tabName;
             ['groups', 'map', 'bingo', 'bus', 'meeting', 'contest'].forEach(t => {
-                const tabEl = document.getElementById(`tab-${t}`);
-                if(tabEl) tabEl.classList.add('hidden-view');
-                const navBtn = document.getElementById(`nav-${t}`);
-                if(navBtn) navBtn.classList.remove('active');
+                document.getElementById(`tab-${t}`)?.classList.add('hidden-view');
+                document.getElementById(`nav-${t}`)?.classList.remove('active');
             });
-            const targetTab = document.getElementById(`tab-${tabName}`);
-            if(targetTab) targetTab.classList.remove('hidden-view');
-            
-            const targetNav = document.getElementById(`nav-${tabName}`);
-            if(targetNav) targetNav.classList.add('active');
+            document.getElementById(`tab-${tabName}`)?.classList.remove('hidden-view');
+            document.getElementById(`nav-${tabName}`)?.classList.add('active');
             
             renderAll(); 
         };
@@ -721,6 +716,8 @@
 
         function renderGroups() {
             const data = window.appData[window.currentClass];
+            if(!data) return;
+            
             const addStudentCard = document.getElementById('student-add-card');
             const btnAddGroup = document.getElementById('btn-add-group');
             
@@ -736,7 +733,7 @@
             if(!container) return;
             container.innerHTML = '';
             
-            data.groups.forEach((group, gIdx) => {
+            data.groups?.forEach((group, gIdx) => {
                 const div = document.createElement('div');
                 div.className = 'bg-white rounded-3xl p-5 shadow-sm border border-gray-200';
                 
@@ -872,7 +869,7 @@
             gSelect.innerHTML = '';
             
             let myGroupIdx = -1;
-            data.groups.forEach((g, i) => { if(g.members.some(m => m.name === window.currentUser)) myGroupIdx = i; });
+            data.groups?.forEach((g, i) => { if(g.members.some(m => m.name === window.currentUser)) myGroupIdx = i; });
 
             const btnResetLocs = document.getElementById('btn-reset-locations');
 
@@ -954,7 +951,7 @@
         
         window.resetLocations = () => {
             if(!window.isTeacher) return;
-            window.appData[window.currentClass].groups.forEach(g => {
+            window.appData[window.currentClass]?.groups.forEach(g => {
                 g.location = '';
                 g.locTime = '';
             });
@@ -964,7 +961,6 @@
             showToast("🔄 모든 위치 기록이 초기화되었습니다.");
         };
 
-        let currentBingoCell = null;
         window.updateBingoSelect = () => {
             const sel = document.getElementById('bingo-group-select');
             if(!sel) return;
