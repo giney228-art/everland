@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>에버랜드 탐험대</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+    
+    <script>
+        window.handleMapError = function() {
+            const img = document.getElementById('map-image');
+            const ui = document.getElementById('map-upload-ui');
+            if(img) img.style.display = 'none';
+            if(ui) {
+                ui.classList.remove('hidden');
+                ui.classList.add('flex');
+            }
+        };
+    </script>
+
+    <style>
+        body { font-family: 'Gowun Dodum', sans-serif; -webkit-tap-highlight-color: transparent; }
+        h1, h2, h3, .font-jua { font-family: 'Jua', sans-serif; }
+        .hidden-view { display: none !important; }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+            z-index: 50;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .bingo-cell { background-size: cover; background-position: center; transition: transform 0.1s; }
+        .bingo-cell:active { transform: scale(0.95); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .tab-btn.active {
+            background-color: #7c3aed; 
+            color: white;
+            border-radius: 9999px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .tab-btn.active span { color: white !important; }
+    </style>
+</head>
+<body class="bg-violet-50 text-gray-800 h-screen w-screen overflow-hidden flex flex-col relative">
+
+    <!-- 홈 화면: 반 선택 -->
+    <div id="view-home" class="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-violet-100 to-violet-50 w-full h-full relative z-10">
+        <div class="text-6xl mb-4 animate-bounce">🎡</div>
+        <h1 class="text-4xl font-jua text-violet-900 mb-2">에버랜드 탐험대</h1>
+        <p class="text-violet-600 font-bold mb-8 text-center bg-white px-4 py-2 rounded-full shadow-sm">우리 반을 선택하고 입장해주세요!</p>
+        
+        <div class="w-full max-w-md bg-white p-4 rounded-3xl shadow-md border border-violet-100">
+            <p class="text-sm text-gray-500 mb-4 text-center font-bold">👇 입장할 반을 터치하세요</p>
+            <div class="grid grid-cols-4 sm:grid-cols-4 gap-3" id="class-grid">
+                <!-- JS로 버튼 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그인(잠금) 화면 -->
+    <div id="view-login" class="hidden-view flex-1 flex-col items-center justify-center p-6 bg-violet-50 w-full h-full z-10 absolute inset-0">
+        <div class="text-7xl mb-6">📝</div>
+        <h2 class="text-3xl font-jua text-violet-900 mb-2" id="login-title">입장하기</h2>
+        <p class="text-violet-600 mb-6 font-bold text-center">본인의 이름을 정확히 입력해주세요.</p>
+        
+        <input type="text" id="login-name" placeholder="본인 이름 (예: 홍길동)" class="w-full max-w-xs px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
+        
+        <div id="login-password-container" class="hidden w-full max-w-xs flex-col items-center">
+            <input type="password" id="login-password" placeholder="반 비밀번호 입력" class="w-full px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
+        </div>
+        
+        <button onclick="loginClass()" class="w-full max-w-xs bg-violet-600 text-white font-jua text-xl py-4 rounded-3xl shadow-lg hover:bg-violet-700 transition">앱 시작하기</button>
+        <button onclick="showView('home')" class="mt-6 text-gray-500 font-bold underline px-4 py-2">⬅️ 다른 반 선택하기</button>
+    </div>
+
+    <!-- 메인 앱 화면 -->
+    <div id="view-main" class="hidden-view flex flex-col w-full h-full bg-gray-50 absolute inset-0 z-0">
+        <!-- 상단 헤더 -->
+        <header class="bg-violet-600 text-white p-4 flex justify-between items-center shadow-md z-10 shrink-0">
+            <button onclick="showView('home')" class="text-violet-100 hover:text-white font-bold flex items-center gap-1 bg-violet-700 px-3 py-1.5 rounded-full">
+                <span>⬅</span> <span id="header-class-name" class="font-jua text-xl">2-?</span>
+            </button>
+            <div class="flex items-center gap-2">
+                <span id="sync-status" class="text-xs font-bold bg-violet-800 px-2 py-1 rounded-full text-violet-200">☁️ 대기중...</span>
+                <button id="teacher-mode-badge" onclick="exitTeacherMode()" class="hidden bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 transition">
+                    🚨 교사모드 ON
+                </button>
+                <button onclick="openTeacherAuth()" class="bg-violet-500 hover:bg-violet-400 p-2 rounded-full transition shadow-sm">
+                    ⚙️ 설정
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto relative" id="main-content">
+            
+            <!-- 탭 1: 모둠 편성 -->
+            <div id="tab-groups" class="p-4 w-full max-w-lg mx-auto pb-24">
+                <div id="student-add-card" class="bg-white rounded-3xl p-5 shadow-sm border border-gray-200 mb-6 relative overflow-hidden hidden">
+                    <div class="absolute top-0 right-0 bg-violet-100 text-violet-700 px-3 py-1 rounded-bl-2xl font-jua text-sm">명단 관리</div>
+                    <h2 class="font-jua text-xl text-violet-900 mb-3 flex items-center gap-2 mt-2">📝 전입생/추가 명단</h2>
+                    <div class="flex gap-2">
+                        <input type="text" id="student-input" placeholder="이름 (쉼표로 구분)" class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:border-violet-500 font-bold text-sm">
+                        <button onclick="addStudents()" class="bg-violet-600 text-white px-5 py-3 rounded-2xl font-jua shadow-sm whitespace-nowrap hover:bg-violet-700">추가</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end mb-4 px-1">
+                    <h2 class="font-jua text-2xl text-violet-900">모둠 명단</h2>
+                    <button id="btn-add-group" onclick="addGroup()" class="hidden bg-emerald-500 text-white px-4 py-2 rounded-full font-jua shadow-sm text-sm flex items-center gap-1 hover:bg-emerald-600">
+                        <span>➕</span> 모둠 만들기
+                    </button>
+                </div>
+                <div id="groups-container" class="flex flex-col gap-4"></div>
+            </div>
+
+            <!-- 탭 2: 위치 지도 -->
+            <div id="tab-map" class="hidden-view p-4 w-full h-full flex flex-col pb-24 max-w-lg mx-auto">
+                <div class="bg-white p-3 rounded-3xl shadow-sm border border-gray-200 flex-1 flex flex-col relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-2 px-2">
+                        <h2 class="font-jua text-xl text-violet-900 flex items-center gap-2">🗺️ 에버랜드 지도</h2>
+                        <button onclick="openModal('guidebook-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
+                            📖 가이드북
+                        </button>
+                    </div>
+                    
+                    <div id="map-container" class="flex-1 bg-gray-100 rounded-2xl relative overflow-hidden border border-gray-200 flex items-center justify-center">
+                        <img id="map-image" src="everland_map.jpg" class="absolute w-full h-full object-contain pointer-events-auto" onerror="handleMapError()" alt="Map">
+                        <div id="map-markers-layer" class="absolute inset-0 pointer-events-none"></div>
+                        
+                        <div id="map-upload-ui" class="hidden flex-col items-center justify-center text-center p-6 bg-white absolute inset-0 z-10">
+                            <span class="text-5xl mb-3">🗺</span>
+                            <p class="text-sm text-gray-500 mb-4 font-bold leading-relaxed">지도 이미지를 찾을 수 없습니다.<br>아래 버튼을 눌러 선택해 주세요!</p>
+                            <label class="bg-violet-600 text-white px-5 py-3 rounded-full font-jua shadow-md cursor-pointer text-lg hover:bg-violet-700 transition pointer-events-auto">
+                                📁 지도 이미지 선택
+                                <input type="file" accept="image/*" class="hidden" onchange="uploadMapImage(event)">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 bg-violet-50 p-4 rounded-2xl border border-violet-100 shadow-inner shrink-0">
+                        <h3 class="font-jua text-violet-800 mb-3 text-center">📍 현위치 보고</h3>
+                        <div class="flex flex-col gap-2">
+                            <select id="map-group-select" class="w-full p-3 rounded-xl border-2 border-violet-200 bg-white font-bold focus:outline-none focus:border-violet-500 text-violet-900 text-center"></select>
+                            <select id="map-location-select" class="w-full p-3 rounded-xl border-2 border-violet-200 bg-white font-bold focus:outline-none focus:border-violet-500 text-gray-700 text-center">
+                                <option value="">어느 구역에 있나요?</option>
+                                <optgroup label="주토피아"><option value="사파리월드">사파리월드</option><option value="로스트밸리">로스트밸리</option><option value="아마존 익스프레스">아마존 익스프레스</option></optgroup>
+                                <optgroup label="유러피안"><option value="T익스프레스">🎢 T익스프레스</option><option value="포시즌스가든">🌺 포시즌스 가든</option></optgroup>
+                                <optgroup label="아메리칸"><option value="허리케인">🌪️ 허리케인</option><option value="더블락스핀">🎸 더블락스핀</option><option value="콜럼버스 대탐험">⛵ 콜럼버스 대탐험</option></optgroup>
+                                <optgroup label="매직랜드"><option value="썬더폴스">💦 썬더폴스</option><option value="범퍼카">🚗 범퍼카</option><option value="피터팬">🧚 피터팬</option></optgroup>
+                            </select>
+                            <button onclick="updateLocation()" class="w-full bg-violet-600 text-white font-jua py-3 rounded-xl shadow-md text-lg mt-1 hover:bg-violet-700 transition">위치 등록 / 변경</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 탭 3: 미션 빙고 -->
+            <div id="tab-bingo" class="hidden-view p-4 w-full max-w-md mx-auto flex flex-col h-full pb-24">
+                <div class="bg-white rounded-3xl p-5 shadow-sm border border-gray-200">
+                    <div class="flex flex-col items-center mb-4">
+                        <h2 class="font-jua text-3xl text-violet-900 mb-3">📸 미션 빙고</h2>
+                        <select id="bingo-group-select" onchange="renderBingo()" class="w-full max-w-xs bg-violet-50 border-2 border-violet-200 text-violet-900 font-jua text-lg px-4 py-2 rounded-xl focus:outline-none shadow-sm text-center">
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4 text-center font-bold">칸을 눌러 인증 사진을 찍고 빙고를 완성하세요!</p>
+                    <div class="grid grid-cols-4 gap-2 w-full aspect-square bg-violet-50 p-2 rounded-2xl shadow-inner border border-violet-100" id="bingo-grid">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 탭 4: 버스 자리 배치도 -->
+            <div id="tab-bus" class="hidden-view p-4 w-full h-full flex flex-col pb-24 max-w-md mx-auto">
+                <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center overflow-y-auto">
+                    <div class="flex justify-between items-center w-full mb-1">
+                        <h2 class="font-jua text-2xl text-violet-900 flex items-center gap-2">🚌 버스 자리</h2>
+                        <div id="bus-admin-btns" class="flex gap-1 hidden">
+                            <button onclick="exportIcebreakerToCSV()" class="bg-green-500 text-white px-2.5 py-1.5 rounded-full font-jua shadow-sm text-xs flex items-center gap-1 hover:bg-green-600">📊 엑셀</button>
+                            <button onclick="clearBusSeats()" class="bg-red-50 text-red-500 px-2.5 py-1.5 rounded-full font-bold shadow-sm text-xs flex items-center gap-1 hover:bg-red-100 border border-red-100">초기화</button>
+                            <button onclick="randomizeBusSeats()" class="bg-violet-500 text-white px-2.5 py-1.5 rounded-full font-jua shadow-sm text-xs flex items-center gap-1 hover:bg-violet-600">🔀 랜덤</button>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mb-3 font-bold w-full text-left">좌석을 터치하면 짝꿍 알아보기 미션을 할 수 있습니다!</p>
+                    
+                    <div class="flex justify-between w-full text-xs font-bold text-gray-500 mb-3 px-3 bg-violet-50 py-2 rounded-xl">
+                        <span id="bus-assigned-count" class="text-violet-700">✅ 탑승완료: 0명</span>
+                        <span id="bus-unassigned-count" class="text-red-500">❌ 미탑승: 0명</span>
+                    </div>
+                    
+                    <div class="bg-gray-100 p-3 rounded-[2rem] border-4 border-gray-300 w-full shadow-inner relative">
+                        <div id="bus-grid-container" class="w-full"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 탭 5: 집합 장소 -->
+            <div id="tab-meeting" class="hidden-view p-4 w-full h-full flex flex-col pb-24 max-w-md mx-auto">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center mb-4">
+                    <h2 class="font-jua text-2xl text-violet-900 mb-2 flex items-center gap-2">🏫 아침 집합 장소</h2>
+                    <p class="text-sm font-bold text-gray-700 bg-violet-50 px-4 py-3 rounded-xl mb-4 text-center w-full leading-relaxed shadow-inner">
+                        ⏰ 시간: 오전 8시 00분<br>📍 장소: 학교 운동장 구령대 앞<br>
+                        <span class="text-violet-600 text-base mt-2 block border-t border-violet-200 pt-2 font-jua">🕵️‍♂️ 유동현 선생님을 찾아라!</span>
+                    </p>
+                    
+                    <div class="w-full bg-green-50 border-2 border-green-200 rounded-2xl p-4 flex flex-col items-center relative overflow-hidden">
+                        <div class="bg-gray-300 w-24 h-6 rounded-b-lg absolute top-0 flex items-center justify-center text-[10px] font-bold text-gray-600 shadow-sm">구령대 (중앙)</div>
+                        <div class="mt-6 flex justify-between w-full text-[11px] font-bold text-gray-600 px-1">
+                            <span>⬅️ 1반 정문 방향</span>
+                            <span>12반 축구골대 ➡️</span>
+                        </div>
+                        <div class="flex items-end justify-between w-full border-b-2 border-gray-400 mt-4 gap-[2px] px-1 h-12" id="meeting-graph-container">
+                            <!-- JS로 렌더링 -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center mt-4">
+                    <h2 class="font-jua text-2xl text-violet-900 mb-2 flex items-center gap-2">🎡 에버랜드 집합 장소</h2>
+                    <p class="text-sm font-bold text-gray-700 bg-amber-50 px-4 py-3 rounded-xl mb-3 text-center w-full leading-relaxed shadow-inner">
+                        ⏰ 시간: 오후 16시 00분<br>📍 장소: 정문 앞 대형 조형물<br>
+                        <span class="text-amber-600 text-base mt-2 block border-t border-amber-200 pt-2 font-jua">🕵️‍♀️ 권유빈 선생님을 찾아라!</span>
+                    </p>
+                    <img src="https://postfiles.pstatic.net/MjAyNjEwMTRfNzgg/MDAxNzkxOTM1ODEwNzI5.9UhXwvLQ_QKLhkCrFW_1UDF7AsW88Nj6HNLANfyeZBkg.eJnRWEVxkNqZOIXM-OTemCLHIxLcsNPyJfXJg9OelzMg.PNG/image.png?type=w3840" onerror="this.src='https://placehold.co/400x300/fef3c7/b45309?text=사진+링크+입력필요'" alt="대형 조형물" class="w-full max-w-[280px] rounded-2xl shadow-md border-2 border-amber-200 my-2">
+                    <p class="text-xs text-gray-500 font-bold text-center mt-2">미아보호소 근처 글로벌 페어 정문 앞<br>사진 속 대형 조형물 앞에서 모입니다!</p>
+                </div>
+            </div>
+
+            <!-- 탭 6: 공용 사진 콘테스트 (교사 전용) -->
+            <div id="tab-contest" class="hidden-view p-4 w-full h-full flex flex-col pb-24 max-w-md mx-auto">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center h-full">
+                    <h2 class="font-jua text-2xl text-violet-900 mb-2 flex items-center gap-2">🏆 전체 학년 사진첩</h2>
+                    <p class="text-xs text-gray-500 mb-4 font-bold text-center">선생님들끼리 모든 반의 사진을 공유하는 곳입니다.<br>베스트 샷을 올리고 제목을 붙여보세요!</p>
+
+                    <div class="w-full flex justify-end mb-3">
+                        <label class="bg-violet-600 text-white px-4 py-2 rounded-full font-jua shadow-sm cursor-pointer text-sm hover:bg-violet-700 transition">
+                            📸 사진 올리기
+                            <input type="file" accept="image/*" class="hidden" onchange="uploadContestPhoto(event)">
+                        </label>
+                    </div>
+
+                    <div id="contest-gallery" class="grid grid-cols-2 gap-3 w-full overflow-y-auto pb-10">
+                        <!-- JS로 렌더링 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bg-white border-t border-gray-200 p-2 flex justify-around items-center shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20 absolute bottom-0 w-full rounded-t-3xl overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('groups')" id="nav-groups" class="tab-btn active flex-1 py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">📝</span><span class="text-[10px] font-jua whitespace-nowrap">명단/모둠</span>
+            </button>
+            <button onclick="switchTab('map')" id="nav-map" class="tab-btn flex-1 py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">🗺</span><span class="text-[10px] font-jua whitespace-nowrap">위치 지도</span>
+            </button>
+            <button onclick="switchTab('bingo')" id="nav-bingo" class="tab-btn flex-1 py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">📸</span><span class="text-[10px] font-jua whitespace-nowrap">미션 빙고</span>
+            </button>
+            <button onclick="switchTab('bus')" id="nav-bus" class="tab-btn flex-1 py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">🚌</span><span class="text-[10px] font-jua whitespace-nowrap">버스 자리</span>
+            </button>
+            <button onclick="switchTab('meeting')" id="nav-meeting" class="tab-btn flex-1 py-3 px-1 flex flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">📢</span><span class="text-[10px] font-jua whitespace-nowrap">집합장소</span>
+            </button>
+            <button onclick="switchTab('contest')" id="nav-contest" class="hidden tab-btn flex-1 py-3 px-1 flex-col items-center justify-center gap-1 transition-all text-gray-400 min-w-[50px]">
+                <span class="text-2xl leading-none mb-1">🏆</span><span class="text-[10px] font-jua whitespace-nowrap">사진첩</span>
+            </button>
+        </nav>
+    </div>
+
+    
+    <!-- 사진 콘테스트 제목 수정 모달 -->
+    <div id="contest-edit-modal" class="modal-overlay z-[60]">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
+            <h3 class="text-2xl font-jua text-violet-900 mb-2">✏️ 사진 제목 수정</h3>
+            <input type="hidden" id="contest-edit-idx">
+            <input type="text" id="contest-edit-title" placeholder="새로운 제목 입력" class="w-full px-4 py-4 rounded-2xl border-2 border-violet-200 mb-4 text-center font-bold text-lg">
+            <div class="flex gap-2">
+                <button onclick="closeModal('contest-edit-modal')" class="flex-1 bg-gray-200 font-jua text-lg py-3 rounded-2xl text-gray-700">취소</button>
+                <button onclick="confirmEditContestTitle()" class="flex-1 bg-violet-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md">수정</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="contest-upload-modal" class="modal-overlay z-[60]">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500 flex flex-col max-h-[90vh]">
+            <h3 class="text-2xl font-jua text-violet-900 mb-2">📸 사진 제목 입력</h3>
+            <p class="text-xs text-gray-500 mb-4 font-bold">전체 선생님들과 공유할 사진의 제목을 정해주세요!</p>
+            <div class="flex-1 overflow-y-auto mb-4 bg-gray-50 rounded-xl p-2 border border-gray-200">
+                 <img id="contest-upload-preview" src="" class="w-full h-auto max-h-48 object-contain rounded-lg hidden">
+            </div>
+            <input type="text" id="contest-photo-title" placeholder="예: 6반 점프샷 (최고의 순간)" class="w-full px-4 py-4 rounded-2xl border-2 border-violet-200 mb-4 text-center font-bold text-lg">
+            <div class="flex gap-2 shrink-0">
+                <button onclick="cancelContestUpload()" class="flex-1 bg-gray-200 font-jua text-lg py-3 rounded-2xl text-gray-700">취소</button>
+                <button onclick="confirmContestUpload()" class="flex-1 bg-violet-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md">업로드</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="student-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm max-h-[80vh] flex flex-col overflow-hidden">
+            <div class="bg-violet-600 px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-jua text-white text-lg">👤 조원 다중 선택</h3>
+                <button onclick="closeModal('student-modal')" class="text-violet-100 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto bg-gray-50">
+                <p class="text-xs text-gray-500 mb-3 font-bold text-center">여러 명을 터치하여 한 번에 선택하세요!</p>
+                <div id="unassigned-students-list" class="grid grid-cols-2 gap-2"></div>
+            </div>
+            <div class="p-4 bg-white border-t border-gray-100 shrink-0">
+                <button onclick="confirmAddStudents()" class="w-full bg-violet-600 text-white font-jua text-xl py-3 rounded-2xl shadow-md hover:bg-violet-700">선택 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bingo-action-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-xs p-6 text-center">
+            <h3 class="text-2xl font-jua text-violet-900 mb-2">인증 사진 관리</h3>
+            <div class="flex flex-col gap-3">
+                <label class="w-full bg-violet-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md cursor-pointer">
+                    📸 사진 다시 찍기
+                    <input type="file" accept="image/*" capture="environment" class="hidden" id="bingo-reupload-input">
+                </label>
+                <button onclick="deleteBingoImage()" class="w-full bg-red-50 text-red-600 font-jua text-lg py-3 rounded-2xl border border-red-200">🗑️ 인증 취소</button>
+                <button onclick="closeModal('bingo-action-modal')" class="w-full bg-gray-100 text-gray-700 font-jua text-lg py-3 rounded-2xl mt-2">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="teacher-auth-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
+            <h3 class="text-2xl font-jua text-violet-900 mb-2">👨‍🏫 선생님 인증</h3>
+            <p class="text-xs text-gray-500 mb-4 font-bold">비밀번호를 입력하여 관리자 모드를 켜주세요.</p>
+            <input type="password" id="teacher-auth-input" placeholder="비밀번호 입력" class="w-full px-4 py-4 rounded-2xl border-2 border-violet-200 mb-5 text-center font-bold text-xl">
+            <div class="flex gap-2">
+                <button onclick="closeModal('teacher-auth-modal')" class="flex-1 bg-gray-200 font-jua text-lg py-3 rounded-2xl">취소</button>
+                <button onclick="verifyTeacher()" class="flex-1 bg-violet-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md">인증하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="settings-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-xs overflow-hidden">
+            <div class="bg-violet-600 px-5 py-4 flex justify-between items-center">
+                <h3 class="font-jua text-white text-lg">⚙ 설정 및 관리</h3>
+                <button onclick="closeModal('settings-modal')" class="text-violet-100 text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 flex flex-col gap-4 bg-gray-50">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
+                    <p class="text-xs text-gray-500 font-bold border-b pb-2">활동 모니터링</p>
+                    <button onclick="openLogsModal(); closeModal('settings-modal');" class="w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 py-3 rounded-xl text-sm font-bold shadow-sm hover:bg-blue-100">
+                        <span class="text-lg">📋</span> 실시간 활동 기록 보기
+                    </button>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
+                    <p class="text-xs text-gray-500 font-bold border-b pb-2">보안 & 명단</p>
+                    <button onclick="openModal('password-modal'); closeModal('settings-modal');" class="w-full flex items-center justify-center gap-2 bg-violet-50 text-violet-700 border border-violet-200 py-3 rounded-xl text-sm font-bold">
+                        <span class="text-lg">🔒</span> 학생 반 비밀번호 설정
+                    </button>
+                    <button onclick="openModal('teacher-password-modal'); closeModal('settings-modal');" class="w-full flex items-center justify-center gap-2 bg-amber-50 text-amber-700 border border-amber-200 py-3 rounded-xl text-sm font-bold">
+                        <span class="text-lg">🔑</span> 교사 비밀번호 변경
+                    </button>
+                    <button onclick="resetClassRoster();" class="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 border border-red-200 py-3 rounded-xl text-sm font-bold mt-1 shadow-sm hover:bg-red-100">
+                        <span class="text-lg">🔄</span> 학생 명단 강제 초기화
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="teacher-password-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-amber-500">
+            <h3 class="text-2xl font-jua text-amber-900 mb-2">교사 비밀번호 변경</h3>
+            <p class="text-xs text-gray-500 mb-4 font-bold">선생님 전용 비밀번호를 새롭게 설정하세요.</p>
+            <input type="text" id="new-teacher-password-input" placeholder="새 교사 비밀번호" class="w-full px-4 py-4 rounded-2xl border-2 border-amber-200 mb-5 text-center font-bold text-xl">
+            <div class="flex gap-2">
+                <button onclick="closeModal('teacher-password-modal')" class="flex-1 bg-gray-200 font-jua text-lg py-3 rounded-2xl">취소</button>
+                <button onclick="saveTeacherPassword()" class="flex-1 bg-amber-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="password-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
+            <h3 class="text-2xl font-jua text-violet-900 mb-2">반 비밀번호 설정</h3>
+            <input type="text" id="new-password-input" placeholder="새 비밀번호 입력" class="w-full px-4 py-4 rounded-2xl border-2 border-violet-200 mb-5 text-center font-bold text-xl">
+            <div class="flex gap-2">
+                <button onclick="closeModal('password-modal')" class="flex-1 bg-gray-200 font-jua text-lg py-3 rounded-2xl">취소</button>
+                <button onclick="savePassword()" class="flex-1 bg-violet-600 text-white font-jua text-lg py-3 rounded-2xl shadow-md">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 버스 좌석 배정 모달 -->
+    <div id="bus-seat-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-violet-600 px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 id="bus-modal-header-title" class="font-jua text-white text-lg">💺 버스 좌석 관리</h3>
+                <button onclick="closeModal('bus-seat-modal')" class="text-violet-100 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-4 flex-1 overflow-y-auto bg-gray-50 flex flex-col gap-4">
+                <div id="bus-icebreaker-section" class="bg-white p-4 rounded-2xl border-2 border-violet-200 shadow-sm hidden">
+                    <h4 class="font-jua text-violet-800 text-lg mb-2 flex items-center gap-1">🤝 짝꿍 알아보기!</h4>
+                    <p class="text-[11px] text-gray-500 mb-3 font-bold">배정된 친구에게 물어보고 빈칸을 채워주세요.</p>
+                    <div class="flex flex-col gap-2">
+                        <div>
+                            <label class="text-[10px] font-bold text-violet-600">1. 에버랜드 최애 놀이기구는?</label>
+                            <input type="text" id="ib-q1" placeholder="예) T익스프레스" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm mt-1 focus:border-violet-400 focus:outline-none font-bold text-gray-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-violet-600">2. 꼭 먹고 싶은 간식은?</label>
+                            <input type="text" id="ib-q2" placeholder="예) 츄러스, 핫도그" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm mt-1 focus:border-violet-400 focus:outline-none font-bold text-gray-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-violet-600">3. 이 친구의 장점 칭찬해주기!</label>
+                            <input type="text" id="ib-q3" placeholder="예) 항상 웃는 얼굴이 예쁘다" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm mt-1 focus:border-violet-400 focus:outline-none font-bold text-gray-700">
+                        </div>
+                        <button onclick="saveIcebreaker()" class="w-full bg-violet-500 text-white font-bold py-2 rounded-lg mt-2 text-sm hover:bg-violet-600 shadow-sm">✅ 답변 저장하기</button>
+                    </div>
+                </div>
+
+                <div id="bus-admin-list-container" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm hidden">
+                    <p class="text-xs text-gray-500 mb-3 font-bold text-center">이 자리에 앉을 사람을 선택하세요.</p>
+                    <div id="bus-student-list" class="grid grid-cols-3 gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="logs-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm h-[80vh] flex flex-col overflow-hidden border-4 border-blue-500">
+            <div class="bg-blue-600 px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-jua text-white text-lg">📋 실시간 활동 기록</h3>
+                <button onclick="closeModal('logs-modal')" class="text-blue-100 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto bg-gray-50 flex flex-col gap-2" id="logs-container"></div>
+        </div>
+    </div>
+
+    <div id="guidebook-modal" class="modal-overlay z-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm max-h-[80vh] flex flex-col overflow-hidden border-4 border-blue-500">
+            <div class="bg-blue-600 px-5 py-4 flex justify-between items-center shrink-0">
+                <h3 class="font-jua text-white text-xl">📖 어트랙션 가이드북</h3>
+                <button onclick="closeModal('guidebook-modal')" class="text-blue-100 hover:text-white text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 flex-1 overflow-y-auto bg-blue-50 text-sm font-bold text-gray-700 leading-relaxed">
+                <p>🦁 <b>주토피아:</b> 사파리월드, 로스트밸리, 아마존 익스프레스</p><br>
+                <p>🎢 <b>유러피안:</b> T익스프레스, 포시즌스가든</p><br>
+                <p>🎸 <b>아메리칸:</b> 허리케인, 콜럼버스 대탐험, 더블락스핀</p><br>
+                <p>🎡 <b>매직랜드:</b> 썬더폴스, 범퍼카, 피터팬</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-full font-bold text-sm opacity-0 pointer-events-none transition-opacity duration-300 z-50 shadow-xl flex items-center gap-2 border border-gray-600 whitespace-nowrap">
+        <span class="text-lg">✨</span> <span id="toast-msg">저장 완료</span>
+    </div>
+
+    <script type="module">
+        
+        // ★★★ 여기에 구글 앱스 스크립트 웹앱 주소를 넣으세요! ★★★
+        const SERVER_URL = "https://script.google.com/macros/s/AKfycbzRR-ETDTw7Wta6IK2mqgJzC5bYLUJd_S802T3i3CTH_dx0HxIo8INb0YRu09b_GfhR/exec"; 
+
+        window.appData = {}; 
+        window.currentClass = null;
+        window.currentUser = ''; 
+        window.isTeacher = false; 
+
+        let currentGroupForStudentAdd = null; 
+        let selectedStudentsForAdd = []; 
+        let activeTab = 'groups';
+        let customMapImage = null; 
+        let currentBusSeat = null; 
+        let currentOccupantForIcebreaker = null;
+        let pendingContestPhoto = null; 
+
+        const BINGO_MISSIONS = [
+            { icon: '📸', text: '얼굴 반쪽만' }, { icon: '🌟', text: '별 모양 손' }, { icon: '🎢', text: '스릴 간판 앞' }, { icon: '👩‍🏫', text: '선생님과 함께' },
+            { icon: '🐯', text: '동물 머리띠' }, { icon: '✌️', text: 'V자 점프샷' }, { icon: '🍦', text: '간식 들고' }, { icon: '🏰', text: '정문 매직트리' },
+            { icon: '❤️', text: '큰 하트 만들기' }, { icon: '😎', text: '멋진 단체포즈' }, { icon: '🌺', text: '꽃받침 사진' }, { icon: '🎟️', text: '탑승 직전' },
+            { icon: '💦', text: '젖은 모습' }, { icon: '🐾', text: '동물 셀카' }, { icon: '👯', text: '똑같은 포즈' }, { icon: '👑', text: '조장 몰아주기' }
+        ];
+
+        // 🌟 최신화된 학생 명단 (전출, 유예, 불참 완벽 제외)
+        const ROSTERS = {
+            "2-1": ["김지민","신태희","신현미","안해빈","윤현서","이가흔","이다은","이시우","이예은","전하린","조수아","최서아","한다연","강지훈","고승민","곽도훈","김도경","김준범","나윤오","배다니엘","손권휘","심지민","이상현","임현서","한지완","허정우","황하준"],
+            "2-2": ["김가윤","김규린","김채원","김태연","나윤서","신하린","안성연","안예빈","오연우","이진명","이하늬","최영주","하다은","고민서","김오현","김우빈","김우찬","김주현","김준서","김태완","민규홍","신이준","임태율","전율","정창근","허태준"],
+            "2-3": ["공효원","김시아","김아인","김지현","박윤하","변지민","선승연","윤수연","이수빈","이시현","이예주","이하나","전은세","최예서","김민준","김재운","맹주형","박승채","서주원","안유하","이수호","이우진","임재건","장우진","장지완","조석환","최태훈","이정인"],
+            "2-4": ["강하율","김다영","김아연","손지유","이해빈","임수빈","조이플","최수빈","최주아","최지율","한다솜","홍다은","송민준","송시율","송예준","송찬희","이민재","이정헌","이현규","정시환","정지휘","정현성","조예성","주찬영","최재용"],
+            "2-5": ["김나현","김다올","김하율","박리엘","박서정","엄가영","유하정","윤예림","이소율","이유빈","이채원","임소율","장혜빈","최가연","고찬솔","김대윤","박주환","박형주","방유찬","백건우","서정원","손준우","유승표","이강윤","장영훈","조해성","천재원"],
+            "2-6": ["남궁윤아","박주연","박채린","오서현","유나율","윤주하","이하린","임지우","조가은","조서영","최예진","홍연두","김시훈","김정윤","김환","박지환","서민기","이건희","이서준","이성현","정재희","조우준","최시율","한도윤","홍태선","황휘상","이채운"],
+            "2-7": ["고은비","공시윤","김소윤","김예나","김채이","김효진","문소미","박선애","박예원","양한슬","이보미","이서영","이지원","이혜연","조윤희","강규온","김재하","류한선","박재안","박지환","양우진","원성운","이주원","이현섭","정유현","정윤서","황유준","김예린"],
+            "2-8": ["김민주","김서현","김윤아","김지영","김채율","김하은","김현진","빈서연","오소망","윤다온","이유이","정서희","차유진","강민재","권율","김강민","김용민","문지호","박준서","송경준","송태민","안창민","이다엘","이승규","이준후","최준","한도윤"],
+            "2-9": ["김민설","김예원","김예은","문지우","박소미","신소율","이다은","이연서","이유림","이혜윤","장서연","정리율","정예빈","조혜윤","고병현","구자민","김은수","김준호","라온","박선호","박성제","서재호","서태양","유지석","이민형","이준익","이현우","조준희"],
+            "2-10": ["고연우","김민지","김시은","김채현","김태림","김혜빈","박서현","송시연","오민서","유예림","유예준","이새아","이수민","한서윤","김태양","김태윤","나민서","박서후","백인성","송채민","신태훈","우시훈","윤지후","이승준","정이안","한준성","홍문화","홍준"],
+            "2-11": ["권세인","권은성","박윤서","박은채","박하얼","송지연","이서우","이윤슬","이한비","정윤","주예나","최유하","최효은","최준호","김우주","김대한","김태환","문도현","박민우","박준혁","서광원","신우진","윤주찬","이재겸","최우진","하민성","허윤재","유하율"],
+            "2-12": ["강하랑","박민지","박서현","박예린","박예빈","박제인","신윤정","안소율","안수정","이루리","이하린","조현서","김도윤","김서후","김하준","송지민","송지헌","안서준","오선길","유준서","장은소","전용우","전현준","정윤성","조성현","호윤수"]
+        };
+
+        async function init() {
+            for(let i=1; i<=12; i++) {
+                const cName = `2-${i}`;
+                const saved = localStorage.getItem(`everland_${cName}`);
+                if (saved) { try { window.appData[cName] = JSON.parse(saved); } catch(e) {} }
+                if(!window.appData[cName]) window.appData[cName] = { password: '', teacherPassword: '0000', students: [], groups: [], busSeats: {}, icebreakers: {}, logs: [] };
+                if (!window.appData[cName].teacherPassword) window.appData[cName].teacherPassword = '0000';
+            }
+            if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
+
+            if(SERVER_URL.trim() !== "") {
+                document.getElementById('sync-status').innerText = "☁️ 로딩중...";
+                try {
+                    const res = await fetch(SERVER_URL + "?api=data");
+                    const serverData = await res.json();
+                    if(Object.keys(serverData).length > 0) {
+                        window.appData = serverData; 
+                        if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
+                        for(let i=1; i<=12; i++) {
+                            const cName = `2-${i}`;
+                            if(window.appData[cName]) {
+                                if(!window.appData[cName].teacherPassword) window.appData[cName].teacherPassword = '0000';
+                                if(!window.appData[cName].busSeats) window.appData[cName].busSeats = {};
+                                if(!window.appData[cName].icebreakers) window.appData[cName].icebreakers = {};
+                                if(!window.appData[cName].logs) window.appData[cName].logs = [];
+                            }
+                        }
+                    }
+                    document.getElementById('sync-status').innerText = "☁️ 서버 연결됨";
+                } catch(err) {
+                    console.log("서버 연결 실패", err);
+                    document.getElementById('sync-status').innerText = "📱 오프라인 모드";
+                }
+            }
+
+            for (let cName in ROSTERS) {
+                if(!window.appData[cName].students) window.appData[cName].students = [];
+                if(window.appData[cName].students.length === 0 && window.appData[cName].groups.length === 0) {
+                    window.appData[cName].students = [...ROSTERS[cName]];
+                }
+            }
+
+            const grid = document.getElementById('class-grid');
+            for(let i=1; i<=12; i++) {
+                const btn = document.createElement('button');
+                btn.className = "bg-violet-50 text-violet-700 border border-violet-200 font-jua text-lg py-3 rounded-2xl shadow-sm hover:bg-violet-100 transition";
+                btn.innerText = `2-${i}`;
+                btn.onclick = () => attemptEnterClass(`2-${i}`);
+                grid.appendChild(btn);
+            }
+        }
+
+        let saveTimer = null;
+        function saveDataLocally() {
+            if(window.currentClass) {
+                localStorage.setItem(`everland_${window.currentClass}`, JSON.stringify(window.appData[window.currentClass]));
+            }
+            if(SERVER_URL.trim() === "") return;
+            document.getElementById('sync-status').innerText = "☁️ 동기화 중...";
+            
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(async () => {
+                try {
+                    await fetch(SERVER_URL, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'text/plain' }, // CORS 회피용 헤더
+                        body: JSON.stringify(window.appData) 
+                    });
+                    document.getElementById('sync-status').innerText = "☁️ 서버 연결됨";
+                } catch(e) {
+                    document.getElementById('sync-status').innerText = "📱 저장 지연";
+                }
+            }, 1500); 
+        }
+
+        window.addLog = (action) => {
+            if(!window.appData[window.currentClass].logs) window.appData[window.currentClass].logs = [];
+            const now = new Date();
+            const timeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
+            window.appData[window.currentClass].logs.unshift({
+                time: timeStr, user: window.currentUser || '알수없음', action: action
+            });
+            if(window.appData[window.currentClass].logs.length > 50) window.appData[window.currentClass].logs.pop(); 
+            saveDataLocally();
+        };
+
+        window.showView = (viewName) => {
+            ['home', 'login', 'main'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden-view'));
+            document.getElementById(`view-${viewName}`).classList.remove('hidden-view');
+            if(viewName === 'home') {
+                window.currentClass = null;
+                window.isTeacher = false;
+                document.getElementById('teacher-mode-badge').classList.add('hidden');
+                document.getElementById('nav-contest').classList.add('hidden');
+                document.getElementById('nav-contest').classList.remove('flex');
+            }
+        };
+
+        window.attemptEnterClass = (cName) => {
+            window.currentClass = cName;
+            document.getElementById('login-title').innerText = `${cName} 입장`;
+            document.getElementById('login-name').value = '';
+            document.getElementById('login-password').value = '';
+            showView('login');
+        };
+
+        window.loginClass = () => {
+            const name = document.getElementById('login-name').value.trim();
+            if(!name) return showToast("본인의 이름을 반드시 입력해주세요!");
+            
+            // ★ 서민지 선생님 마스터키 (비번 무시하고 통과)
+            if(name === "서민지") {
+                window.currentUser = name;
+                addLog(`총괄 선생님이 마스터 권한으로 접속했습니다.`);
+                return enterClass();
+            }
+
+            if(window.appData[window.currentClass].password) {
+                const pw = document.getElementById('login-password').value;
+                if(window.appData[window.currentClass].password !== pw) {
+                    return showToast("❌ 반 비밀번호가 틀렸습니다.");
+                }
+            }
+            
+            window.currentUser = name; 
+            addLog(`앱에 접속했습니다.`); 
+            enterClass();
+        };
+
+        async function enterClass() {
+            showView('main');
+            document.getElementById('header-class-name').innerText = window.currentClass;
+            switchTab('groups');
+        }
+
+        window.switchTab = (tabName) => {
+            activeTab = tabName;
+            ['groups', 'map', 'bingo', 'bus', 'meeting', 'contest'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden-view');
+                const navBtn = document.getElementById(`nav-${t}`);
+                if(navBtn) navBtn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden-view');
+            document.getElementById(`nav-${tabName}`).classList.add('active');
+            
+            renderAll(); 
+        };
+
+        function renderAll() {
+            if(!window.currentClass) return;
+            renderGroups();
+            if(activeTab === 'map') renderMap();
+            if(activeTab === 'bingo') updateBingoSelect();
+            if(activeTab === 'bus') renderBus();
+            if(activeTab === 'meeting') renderMeeting();
+            if(activeTab === 'contest') renderContest();
+        }
+
+        function renderGroups() {
+            const data = window.appData[window.currentClass];
+            const addStudentCard = document.getElementById('student-add-card');
+            const btnAddGroup = document.getElementById('btn-add-group');
+            
+            if(window.isTeacher) {
+                addStudentCard.classList.remove('hidden');
+                btnAddGroup.classList.remove('hidden');
+            } else {
+                addStudentCard.classList.add('hidden');
+                btnAddGroup.classList.add('hidden');
+            }
+
+            const container = document.getElementById('groups-container');
+            container.innerHTML = '';
+            
+            data.groups.forEach((group, gIdx) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white rounded-3xl p-5 shadow-sm border border-gray-200';
+                
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-3 border-b border-gray-50 pb-2';
+                
+                if(window.isTeacher) {
+                    header.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🚩</span>
+                            <input type="text" value="${group.name}" onchange="updateGroupName(${gIdx}, this.value)" class="font-jua text-xl text-violet-900 bg-transparent border-b border-dashed border-gray-300 w-28 focus:outline-none">
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openStudentModal(${gIdx})" class="bg-violet-50 text-violet-700 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">👤 조원 추가</button>
+                            <button onclick="deleteGroup(${gIdx})" class="bg-red-50 text-red-500 px-2 rounded-full font-bold">&times;</button>
+                        </div>
+                    `;
+                } else {
+                    header.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🚩</span>
+                            <span class="font-jua text-xl text-violet-900">${group.name}</span>
+                        </div>
+                    `;
+                }
+                
+                const membersDiv = document.createElement('div');
+                membersDiv.className = 'flex flex-wrap gap-2';
+                if(group.members.length === 0) {
+                    membersDiv.innerHTML = '<span class="text-xs text-gray-400 font-bold bg-gray-50 px-3 py-1 rounded-full">조원이 없습니다.</span>';
+                } else {
+                    group.members.forEach((m, mIdx) => {
+                        const mTag = document.createElement('div');
+                        mTag.className = `px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1 shadow-sm ${m.isLeader ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700'}`;
+                        if(window.isTeacher) {
+                            mTag.innerHTML = `<span onclick="toggleLeader(${gIdx}, ${mIdx})" class="cursor-pointer text-lg ${m.isLeader?'':'opacity-30'}">👑</span><span class="pt-0.5">${m.name}</span><button onclick="removeMember(${gIdx}, ${mIdx})" class="ml-1 text-gray-400 hover:text-red-500">&times;</button>`;
+                        } else {
+                            mTag.innerHTML = `<span class="text-lg ${m.isLeader?'':'opacity-30'}">👑</span><span class="pt-0.5">${m.name}</span>`;
+                        }
+                        membersDiv.appendChild(mTag);
+                    });
+                }
+                div.appendChild(header); div.appendChild(membersDiv); container.appendChild(div);
+            });
+        }
+
+        window.addStudents = () => {
+            if(!window.isTeacher) return;
+            const val = document.getElementById('student-input').value.trim();
+            if(!val) return;
+            val.split(',').forEach(n => { if(n.trim()) window.appData[window.currentClass].students.push(n.trim()); });
+            document.getElementById('student-input').value = '';
+            saveDataLocally(); renderGroups();
+        };
+
+        window.addGroup = () => {
+            if(!window.isTeacher) return;
+            const data = window.appData[window.currentClass];
+            data.groups.push({ id: Date.now().toString(), name: `${data.groups.length + 1}모둠`, members: [], location: '', locTime: '', bingos: Array(16).fill(null) });
+            saveDataLocally(); renderGroups();
+        };
+
+        window.updateGroupName = (gIdx, name) => { window.appData[window.currentClass].groups[gIdx].name = name; saveDataLocally(); };
+        window.deleteGroup = (gIdx) => { window.appData[window.currentClass].groups.splice(gIdx, 1); saveDataLocally(); renderGroups(); };
+        window.removeMember = (gIdx, mIdx) => { window.appData[window.currentClass].groups[gIdx].members.splice(mIdx, 1); saveDataLocally(); renderGroups(); };
+        window.toggleLeader = (gIdx, mIdx) => {
+            window.appData[window.currentClass].groups[gIdx].members.forEach((m, i) => m.isLeader = (i === mIdx));
+            saveDataLocally(); renderGroups();
+        };
+
+        window.openStudentModal = (gIdx) => {
+            currentGroupForStudentAdd = gIdx; selectedStudentsForAdd = [];
+            const data = window.appData[window.currentClass];
+            const assigned = data.groups.flatMap(g => g.members.map(m => m.name));
+            const unassigned = data.students.filter(s => !assigned.includes(s));
+            
+            const listDiv = document.getElementById('unassigned-students-list');
+            listDiv.innerHTML = unassigned.length === 0 ? '<div class="col-span-2 text-center py-6 text-sm text-red-500 font-bold bg-white rounded-xl">남은 학생이 없습니다!</div>' : '';
+            
+            unassigned.forEach(name => {
+                const btn = document.createElement('button');
+                btn.className = "p-3 bg-white text-gray-700 rounded-2xl font-bold border-2 border-gray-200 transition-all";
+                btn.innerText = name;
+                btn.onclick = () => {
+                    const idx = selectedStudentsForAdd.indexOf(name);
+                    if(idx > -1) {
+                        selectedStudentsForAdd.splice(idx, 1);
+                        btn.classList.replace('border-violet-500', 'border-gray-200'); btn.classList.remove('bg-violet-50', 'text-violet-700');
+                    } else {
+                        selectedStudentsForAdd.push(name);
+                        btn.classList.replace('border-gray-200', 'border-violet-500'); btn.classList.add('bg-violet-50', 'text-violet-700');
+                    }
+                };
+                listDiv.appendChild(btn);
+            });
+            openModal('student-modal');
+        };
+
+        window.confirmAddStudents = () => {
+            if(selectedStudentsForAdd.length > 0 && currentGroupForStudentAdd !== null) {
+                const group = window.appData[window.currentClass].groups[currentGroupForStudentAdd];
+                const isFirst = group.members.length === 0;
+                selectedStudentsForAdd.forEach((name, idx) => group.members.push({ name: name, isLeader: isFirst && idx === 0 }));
+                saveDataLocally(); renderGroups();
+            }
+            closeModal('student-modal');
+        };
+
+        window.uploadMapImage = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                customMapImage = event.target.result;
+                const img = document.getElementById('map-image');
+                img.src = customMapImage; img.style.display = 'block';
+                document.getElementById('map-upload-ui').classList.replace('flex', 'hidden');
+                renderMap();
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.renderMap = () => {
+            const data = window.appData[window.currentClass];
+            const gSelect = document.getElementById('map-group-select');
+            gSelect.innerHTML = '';
+            
+            let myGroupIdx = -1;
+            data.groups.forEach((g, i) => { if(g.members.some(m => m.name === window.currentUser)) myGroupIdx = i; });
+
+            if(window.isTeacher) {
+                gSelect.disabled = false;
+                gSelect.innerHTML = '<option value="">모둠 선택</option>';
+                data.groups.forEach((g, i) => gSelect.insertAdjacentHTML('beforeend', `<option value="${i}">${g.name}</option>`));
+            } else {
+                if (myGroupIdx === -1) { gSelect.innerHTML = '<option value="">소속된 모둠이 없습니다</option>'; gSelect.disabled = true; } 
+                else { gSelect.innerHTML = `<option value="${myGroupIdx}">우리 모둠 (${data.groups[myGroupIdx].name})</option>`; gSelect.disabled = true; }
+            }
+
+            const layer = document.getElementById('map-markers-layer');
+            layer.innerHTML = '<div class="absolute top-2 left-2 right-2 bg-white/95 backdrop-blur p-3 rounded-2xl shadow-lg border border-violet-200 text-xs pointer-events-auto flex flex-col gap-2 max-h-40 overflow-y-auto" id="map-status-box"><div class="font-jua text-violet-900 border-b-2 border-violet-100 pb-1 text-base sticky top-0 bg-white/95 z-10 flex justify-between"><span>📍 위치 현황판</span><span class="text-[10px] text-gray-400 font-normal pt-1">실시간</span></div></div>';
+            const statusBox = document.getElementById('map-status-box');
+            
+            let hasLocs = false;
+            data.groups.forEach(g => {
+                if(g.location) {
+                    hasLocs = true;
+                    const tStr = g.locTime ? `<span class="text-[10px] text-blue-500 font-bold ml-1">(${g.locTime})</span>` : '';
+                    if(window.isTeacher || data.groups.indexOf(g) === myGroupIdx) {
+                        statusBox.insertAdjacentHTML('beforeend', `<div class="bg-violet-50 p-2 rounded-xl border border-violet-100 flex justify-between items-center"><span class="font-bold text-violet-800">${g.name}</span><span class="text-gray-700 font-bold text-[11px]">${g.location} ${tStr}</span></div>`);
+                    } else {
+                         statusBox.insertAdjacentHTML('beforeend', `<div class="bg-gray-50 p-2 rounded-xl border border-gray-100 flex justify-between items-center"><span class="font-bold text-gray-400">${g.name}</span><span class="text-gray-400 font-bold text-[11px]">🔒 비공개</span></div>`);
+                    }
+                }
+            });
+            if(!hasLocs) statusBox.insertAdjacentHTML('beforeend', '<div class="text-gray-400 font-bold text-center py-2">보고된 위치가 없습니다.</div>');
+        };
+
+        window.updateLocation = () => {
+            const gIdx = document.getElementById('map-group-select').value;
+            const loc = document.getElementById('map-location-select').value;
+            if(gIdx === "" || !loc) return showToast("⚠ 모둠과 구역을 선택하세요.");
+            
+            const now = new Date();
+            const timeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
+            window.appData[window.currentClass].groups[gIdx].location = loc;
+            window.appData[window.currentClass].groups[gIdx].locTime = timeStr; 
+            
+            addLog(`[위치보고] ${window.appData[window.currentClass].groups[gIdx].name} -> ${loc} (${timeStr})`);
+            saveDataLocally(); document.getElementById('map-location-select').value = ''; renderMap(); showToast(`📍 [${timeStr}] 위치 등록 완료!`);
+        };
+
+        let currentBingoCell = null;
+        window.updateBingoSelect = () => {
+            const sel = document.getElementById('bingo-group-select');
+            const data = window.appData[window.currentClass];
+            sel.innerHTML = '';
+            
+            if (window.isTeacher) {
+                sel.disabled = false;
+                if(data.groups.length === 0) sel.innerHTML = '<option value="">모둠 생성 필요</option>';
+                data.groups.forEach((g, i) => sel.insertAdjacentHTML('beforeend', `<option value="${i}">${g.name} 빙고판</option>`));
+            } else {
+                let myGroupIdx = -1;
+                data.groups.forEach((g, i) => { if(g.members.some(m => m.name === window.currentUser)) myGroupIdx = i; });
+                if (myGroupIdx === -1) { sel.innerHTML = '<option value="">소속된 모둠이 없습니다</option>'; sel.disabled = true; } 
+                else { sel.innerHTML = `<option value="${myGroupIdx}">우리 모둠 (${data.groups[myGroupIdx].name})</option>`; sel.disabled = true; }
+            }
+            renderBingo();
+        };
+
+        window.renderBingo = () => {
+            const grid = document.getElementById('bingo-grid');
+            grid.innerHTML = '';
+            const gIdx = document.getElementById('bingo-group-select').value;
+            
+            if(gIdx === "") { grid.innerHTML = '<div class="col-span-4 py-10 text-center font-bold text-gray-400">모둠을 선택하거나 소속되어야 합니다.</div>'; return; }
+            
+            const group = window.appData[window.currentClass].groups[gIdx];
+            if(!group.bingos || group.bingos.length !== 16) group.bingos = Array(16).fill(null);
+
+            BINGO_MISSIONS.forEach((mission, i) => {
+                const cell = document.createElement('div');
+                const hasImg = !!group.bingos[i];
+                cell.className = `bingo-cell relative rounded-xl flex flex-col items-center justify-center text-center p-1 cursor-pointer border-2 overflow-hidden ${hasImg ? 'border-transparent shadow-md' : 'border-dashed border-violet-300 bg-white hover:bg-violet-50'}`;
+                
+                if(hasImg) {
+                    cell.style.backgroundImage = `url(${group.bingos[i]})`;
+                    cell.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-[4.5rem] text-red-500 opacity-90 drop-shadow-lg">⭕</div>';
+                } else {
+                    cell.innerHTML = `<span class="text-3xl mb-1">${mission.icon}</span><span class="text-[10px] font-bold leading-tight break-keep-all text-gray-600 px-1">${mission.text}</span>`;
+                }
+
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment'; input.className = 'hidden';
+                input.onchange = (e) => handleBingoUpload(e, i);
+                
+                cell.appendChild(input);
+                cell.onclick = () => { if(hasImg) { currentBingoCell = i; openModal('bingo-action-modal'); } else input.click(); };
+                grid.appendChild(cell);
+            });
+        };
+
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 400; 
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    callback(canvas.toDataURL('image/jpeg', 0.5)); 
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.handleBingoUpload = (e, cellIdx) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            compressImage(file, (base64) => {
+                const gIdx = document.getElementById('bingo-group-select').value;
+                window.appData[window.currentClass].groups[gIdx].bingos[cellIdx] = base64;
+                addLog(`[빙고] ${window.appData[window.currentClass].groups[gIdx].name} 빙고 사진을 올렸습니다.`);
+                saveDataLocally(); renderBingo();
+            });
+        };
+
+        document.getElementById('bingo-reupload-input').onchange = (e) => {
+            if(currentBingoCell !== null) { handleBingoUpload(e, currentBingoCell); closeModal('bingo-action-modal'); }
+        };
+
+        window.deleteBingoImage = () => {
+            if(currentBingoCell !== null) {
+                window.appData[window.currentClass].groups[document.getElementById('bingo-group-select').value].bingos[currentBingoCell] = null;
+                addLog('[빙고] 빙고 사진을 취소했습니다.');
+                saveDataLocally(); renderBingo(); closeModal('bingo-action-modal');
+            }
+        };
+
+        window.renderBus = () => {
+            const container = document.getElementById('bus-grid-container');
+            const adminBtns = document.getElementById('bus-admin-btns');
+            const data = window.appData[window.currentClass];
+            if(!data.busSeats) data.busSeats = {};
+
+            if(window.isTeacher) adminBtns.classList.remove('hidden');
+            else adminBtns.classList.add('hidden');
+
+            let html = '<div class="grid grid-cols-[1fr_1fr_24px_1fr_1fr] gap-x-1.5 gap-y-2 mb-2">';
+            html += `<div class="bg-slate-300 text-slate-700 rounded-lg flex items-center justify-center text-[10px] font-bold py-2 shadow-inner">운전석</div><div></div><div class="text-[9px] text-gray-400 flex items-center justify-center"></div><div class="bg-slate-300 text-slate-700 rounded-lg flex items-center justify-center text-[10px] font-bold py-2 shadow-inner">출입구</div><div></div>`;
+
+            let seatedCount = 0;
+            for(let row = 1; row <= 12; row++) {
+                for(let col = 1; col <= 4; col++) {
+                    const seatId = `r${row}_c${col}`;
+                    const occupant = data.busSeats[seatId];
+                    let seatClass = "bg-white border-2 border-gray-300 text-gray-400 hover:bg-violet-50 cursor-pointer"; 
+                    let displayName = '<span class="text-xl leading-none pt-0.5">+</span>'; 
+
+                    if(occupant) {
+                        if(['담임', '부담임', '예비', '공석'].includes(occupant)) {
+                            seatClass = "bg-slate-100 border-2 border-slate-300 text-slate-600";
+                            displayName = occupant;
+                        } else {
+                            seatClass = "bg-violet-500 border-2 border-violet-600 text-white shadow-md cursor-pointer";
+                            displayName = occupant;
+                            seatedCount++; 
+                        }
+                    } else if (!window.isTeacher) {
+                         seatClass = "bg-white border-2 border-gray-200 text-gray-200 cursor-default";
+                    }
+
+                    if(col === 3) html += `<div class="text-[10px] text-slate-400 flex items-center justify-center font-bold tracking-tighter">${row}열</div>`;
+                    html += `<button onclick="openBusSeatModal('${seatId}')" class="${seatClass} rounded-lg flex items-center justify-center text-[11px] font-bold py-2 transition-transform active:scale-95 shadow-sm truncate px-0.5 h-9">${displayName}</button>`;
+                }
+            }
+            html += '</div>';
+            html += '<div class="bg-red-50 border border-red-200 text-red-500 text-center text-xs py-2 rounded-xl font-bold mt-3 tracking-wide">🚫 맨 뒷좌석 제외 (위험)</div>';
+
+            container.innerHTML = html;
+            document.getElementById('bus-assigned-count').innerText = `✅ 탑승완료: ${seatedCount}명`;
+            document.getElementById('bus-unassigned-count').innerText = `❌ 미탑승: ${data.students.length - seatedCount}명`;
+        };
+
+        window.openBusSeatModal = (seatId) => {
+            const data = window.appData[window.currentClass];
+            const occupant = data.busSeats[seatId];
+
+            if(!window.isTeacher && (!occupant || ['담임', '부담임', '예비', '공석'].includes(occupant))) return;
+
+            currentBusSeat = seatId;
+            if (!data.icebreakers) data.icebreakers = {}; 
+            
+            const listDiv = document.getElementById('bus-student-list');
+            listDiv.innerHTML = '';
+            const icebreakerSection = document.getElementById('bus-icebreaker-section');
+            const adminListContainer = document.getElementById('bus-admin-list-container');
+            const headerTitle = document.getElementById('bus-modal-header-title');
+
+            if(window.isTeacher) adminListContainer.classList.remove('hidden');
+            else adminListContainer.classList.add('hidden');
+            
+            if (occupant && !['담임', '부담임', '예비', '공석'].includes(occupant)) {
+                currentOccupantForIcebreaker = occupant;
+                icebreakerSection.classList.remove('hidden');
+                headerTitle.innerText = `${occupant} 짝꿍 알아보기`;
+                const answers = data.icebreakers[occupant] || { q1: '', q2: '', q3: '' };
+                document.getElementById('ib-q1').value = answers.q1 || '';
+                document.getElementById('ib-q2').value = answers.q2 || '';
+                document.getElementById('ib-q3').value = answers.q3 || '';
+            } else {
+                currentOccupantForIcebreaker = null;
+                if(icebreakerSection) icebreakerSection.classList.add('hidden');
+                headerTitle.innerText = `💺 버스 좌석 관리`;
+            }
+            
+            if(window.isTeacher) {
+                ['담임', '부담임', '예비', '공석'].forEach(sp => {
+                    const isSelected = data.busSeats[seatId] === sp;
+                    const btnClass = isSelected ? "p-2 bg-slate-300 text-slate-800 rounded-xl font-bold text-sm shadow-inner" : "p-2 bg-slate-100 text-slate-700 rounded-xl font-bold border border-slate-200 text-sm hover:bg-slate-200";
+                    listDiv.insertAdjacentHTML('beforeend', `<button onclick="selectBusStudent('${sp}')" class="${btnClass}">${sp}</button>`);
+                });
+                listDiv.insertAdjacentHTML('beforeend', `<button onclick="selectBusStudent('비우기')" class="p-2 bg-red-50 text-red-600 rounded-xl font-bold border border-red-200 text-sm col-span-2">🗑️ 자리 비우기</button>`);
+                listDiv.insertAdjacentHTML('beforeend', '<div class="col-span-3 my-2 border-b border-gray-200"></div>');
+
+                data.students.forEach(name => {
+                    let isAssignedToOther = false; let isAssignedToCurrent = false;
+                    for(let key in data.busSeats) {
+                        if(data.busSeats[key] === name) { if(key === seatId) isAssignedToCurrent = true; else isAssignedToOther = true; }
+                    }
+                    let btnClass = isAssignedToCurrent ? "p-2 bg-violet-600 text-white rounded-xl font-bold border-2 border-violet-700 text-sm shadow-md" : (isAssignedToOther ? "p-2 bg-gray-50 text-gray-400 rounded-xl font-bold border-2 border-gray-100 text-sm line-through opacity-70" : "p-2 bg-white text-violet-700 rounded-xl font-bold border-2 border-violet-200 text-sm shadow-sm hover:bg-violet-50");
+                    listDiv.insertAdjacentHTML('beforeend', `<button onclick="selectBusStudent('${name}')" class="${btnClass}">${name}</button>`);
+                });
+            }
+            openModal('bus-seat-modal');
+        };
+
+        window.saveIcebreaker = () => {
+            if(!currentOccupantForIcebreaker) return;
+            const data = window.appData[window.currentClass];
+            if (!data.icebreakers) data.icebreakers = {};
+            data.icebreakers[currentOccupantForIcebreaker] = {
+                q1: document.getElementById('ib-q1').value.trim(),
+                q2: document.getElementById('ib-q2').value.trim(),
+                q3: document.getElementById('ib-q3').value.trim()
+            };
+            addLog(`[버스] ${currentOccupantForIcebreaker} 짝꿍 질문지를 작성했습니다.`);
+            saveDataLocally(); showToast("✅ 질문지가 저장되었습니다!");
+        };
+
+        window.selectBusStudent = (name) => {
+            if(!window.isTeacher) return;
+            const data = window.appData[window.currentClass];
+            if(name === '비우기') delete data.busSeats[currentBusSeat];
+            else {
+                if(!['담임', '부담임', '예비', '공석'].includes(name)) {
+                    for(let key in data.busSeats) { if(data.busSeats[key] === name) delete data.busSeats[key]; }
+                }
+                data.busSeats[currentBusSeat] = name;
+            }
+            saveDataLocally(); renderBus(); closeModal('bus-seat-modal');
+        };
+
+        window.clearBusSeats = () => {
+            if(!window.isTeacher) return;
+            const data = window.appData[window.currentClass];
+            for(let key in data.busSeats) { if(!['담임', '부담임', '예비', '공석'].includes(data.busSeats[key])) delete data.busSeats[key]; }
+            addLog(`버스 좌석을 초기화했습니다.`);
+            saveDataLocally(); renderBus(); 
+        };
+
+        window.randomizeBusSeats = () => {
+            if(!window.isTeacher) return;
+            const data = window.appData[window.currentClass];
+            for(let key in data.busSeats) {
+                if(!['담임', '부담임', '예비', '공석'].includes(data.busSeats[key])) delete data.busSeats[key];
+            }
+            let students = [...data.students].sort(() => Math.random() - 0.5);
+            const emptySeats = [];
+            for(let row = 1; row <= 12; row++) {
+                for(let col = 1; col <= 4; col++) {
+                    const seatId = `r${row}_c${col}`;
+                    if(!data.busSeats[seatId]) emptySeats.push(seatId);
+                }
+            }
+            if(emptySeats.length === 0) return showToast("빈 좌석이 없습니다.");
+            while(students.length > 0 && emptySeats.length > 0) {
+                data.busSeats[emptySeats.shift()] = students.pop();
+            }
+            addLog(`버스 좌석을 전체 랜덤 배정했습니다.`);
+            saveDataLocally(); renderBus(); 
+            showToast("🔀 모든 학생이 흩어져서 랜덤 배치되었습니다!");
+        };
+
+        window.exportIcebreakerToCSV = () => {
+            if(!window.isTeacher) return;
+            const data = window.appData[window.currentClass];
+            if (!data || !data.students) return showToast("데이터가 없습니다.");
+
+            let csvContent = "\uFEFF"; 
+            csvContent += "이름,배정좌석,최애 놀이기구,꼭 먹고 싶은 간식,장점 칭찬\n";
+
+            data.students.forEach(student => {
+                let seatStr = "미배정";
+                for (let key in data.busSeats) {
+                    if (data.busSeats[key] === student) {
+                        const parts = key.split('_');
+                        const row = parts[0].replace('r', '');
+                        const col = parts[1].replace('c', '');
+                        const colName = col === '1' ? '창가(좌)' : col === '2' ? '복도(좌)' : col === '3' ? '복도(우)' : '창가(우)';
+                        seatStr = `${row}열 ${colName}`; break;
+                    }
+                }
+                const ans = data.icebreakers && data.icebreakers[student] ? data.icebreakers[student] : {q1:'', q2:'', q3:''};
+                const q1 = `"${(ans.q1 || '').replace(/"/g, '""')}"`;
+                const q2 = `"${(ans.q2 || '').replace(/"/g, '""')}"`;
+                const q3 = `"${(ans.q3 || '').replace(/"/g, '""')}"`;
+
+                csvContent += `${student},${seatStr},${q1},${q2},${q3}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${window.currentClass}_짝꿍미션_결과.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast("📊 엑셀 파일이 다운로드되었습니다!");
+        };
+
+        window.renderMeeting = () => {
+            const container = document.getElementById('meeting-graph-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            let activeClassNum = window.currentClass ? parseInt(window.currentClass.split('-')[1]) : 0;
+            
+            for (let i = 1; i <= 12; i++) {
+                const isCurrent = (i === activeClassNum);
+                const box = document.createElement('div');
+                box.className = `flex-1 rounded-t-lg flex items-center justify-center font-bold text-[10px] transition-all h-8 mx-[1px] ${
+                    isCurrent ? 'bg-violet-500 text-white shadow-md' : 'bg-gray-200 text-gray-500'
+                }`;
+                box.innerText = isCurrent ? `${i}반` : i;
+                container.appendChild(box);
+            }
+        };
+
+        window.renderContest = () => {
+            const container = document.getElementById('contest-gallery');
+            if(!container) return;
+            container.innerHTML = '';
+            const photos = window.appData.sharedContestPhotos || [];
+            
+            if(photos.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-center py-10 text-gray-400 font-bold text-sm">등록된 사진이 없습니다. 베스트 샷을 올려보세요!</div>';
+                return;
+            }
+            photos.forEach((photo, idx) => {
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="relative group aspect-square rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-gray-50 flex flex-col">
+                        <div class="relative flex-1 overflow-hidden bg-gray-100">
+                            <img src="${photo.url}" class="w-full h-full object-cover">
+                            <button onclick="deleteContestPhoto(${idx})" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md">✕</button>
+                            <button onclick="openEditContestTitle(${idx})" class="absolute top-1 right-8 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md">✏️</button>
+                        </div>
+                        <div class="bg-gray-800 text-white text-[10px] px-2 py-1.5 flex flex-col justify-center shrink-0">
+                            <span class="font-bold truncate text-xs text-amber-300 pb-0.5">${photo.title}</span>
+                            <span class="text-[8px] text-gray-300 flex justify-between"><span>${photo.uploader}</span><span>${photo.time}</span></span>
+                        </div>
+                    </div>
+                `);
+            });
+        };
+
+        window.uploadContestPhoto = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            compressImage(file, (base64) => {
+                pendingContestPhoto = base64;
+                const previewImg = document.getElementById('contest-upload-preview');
+                previewImg.src = base64; previewImg.classList.remove('hidden');
+                document.getElementById('contest-photo-title').value = '';
+                openModal('contest-upload-modal');
+            });
+            e.target.value = ''; 
+        };
+
+        window.cancelContestUpload = () => { pendingContestPhoto = null; closeModal('contest-upload-modal'); };
+        window.confirmContestUpload = () => {
+            if(!pendingContestPhoto) return;
+            const title = document.getElementById('contest-photo-title').value.trim() || '제목 없음';
+            const now = new Date(); const timeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
+            if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
+            window.appData.sharedContestPhotos.unshift({ url: pendingContestPhoto, title: title, time: timeStr, uploader: `${window.currentClass} ${window.currentUser}` });
+            addLog(`콘테스트에 [${title}] 사진을 등록했습니다.`);
+            saveDataLocally(); renderContest(); closeModal('contest-upload-modal'); showToast("📸 공유 사진 업로드 완료!");
+            pendingContestPhoto = null;
+        };
+        window.deleteContestPhoto = (idx) => {
+            window.appData.sharedContestPhotos.splice(idx, 1);
+            addLog(`콘테스트 사진을 삭제했습니다.`);
+            saveDataLocally(); renderContest(); showToast("🗑️ 사진이 삭제되었습니다.");
+        };
+        window.openEditContestTitle = (idx) => {
+            const currentTitle = window.appData.sharedContestPhotos[idx].title;
+            document.getElementById('contest-edit-idx').value = idx;
+            document.getElementById('contest-edit-title').value = currentTitle;
+            openModal('contest-edit-modal');
+        };
+        window.confirmEditContestTitle = () => {
+            const idx = document.getElementById('contest-edit-idx').value;
+            const newTitle = document.getElementById('contest-edit-title').value.trim();
+            if(newTitle && idx !== "") {
+                window.appData.sharedContestPhotos[idx].title = newTitle;
+                addLog(`콘테스트 사진 제목을 [${newTitle}]으로 수정했습니다.`);
+                saveDataLocally(); renderContest(); closeModal('contest-edit-modal'); showToast("✏️ 제목이 수정되었습니다.");
+            }
+        };
+
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+        
+        let toastTimer;
+        window.showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.classList.add('opacity-0', 'pointer-events-none'); }, 2000);
+        };
+
+        window.openTeacherAuth = () => { document.getElementById('teacher-auth-input').value = ''; openModal('teacher-auth-modal'); };
+        window.verifyTeacher = () => {
+            const input = document.getElementById('teacher-auth-input').value;
+            if(input === '0000' || input === window.appData[window.currentClass].teacherPassword) {
+                if(input === '0000') window.appData[window.currentClass].teacherPassword = '0000'; 
+                window.isTeacher = true; 
+                document.getElementById('teacher-mode-badge').classList.remove('hidden');
+                document.getElementById('nav-contest').classList.remove('hidden'); document.getElementById('nav-contest').classList.add('flex');
+                saveDataLocally(); closeModal('teacher-auth-modal'); openModal('settings-modal'); renderAll(); showToast("👨‍🏫 교사 권한이 활성화되었습니다!");
+            } else { showToast("❌ 비밀번호가 틀렸습니다."); }
+        };
+
+        window.exitTeacherMode = () => {
+            window.isTeacher = false;
+            document.getElementById('teacher-mode-badge').classList.add('hidden');
+            document.getElementById('nav-contest').classList.add('hidden'); document.getElementById('nav-contest').classList.remove('flex');
+            if(activeTab === 'contest') switchTab('groups'); renderAll(); showToast("교사 모드가 종료되었습니다.");
+        };
+
+        window.openLogsModal = () => {
+            const container = document.getElementById('logs-container'); container.innerHTML = '';
+            const logs = window.appData[window.currentClass].logs || [];
+            if(logs.length === 0) { container.innerHTML = '<div class="text-center text-gray-400 font-bold mt-10">아직 활동 기록이 없습니다.</div>'; } 
+            else {
+                logs.forEach(l => {
+                    container.insertAdjacentHTML('beforeend', `
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-xs">
+                            <div class="flex justify-between items-center mb-1"><span class="font-bold text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">${l.user}</span><span class="text-gray-400 font-bold">${l.time}</span></div>
+                            <div class="text-gray-600 font-bold pl-1 leading-relaxed">${l.action}</div>
+                        </div>
+                    `);
+                });
+            }
+            openModal('logs-modal');
+        };
+
+        window.resetClassRoster = () => {
+            if(ROSTERS[window.currentClass]) {
+                window.appData[window.currentClass].students = [...ROSTERS[window.currentClass]];
+                addLog(`학생 명단을 기본 명렬표로 강제 초기화했습니다.`);
+                saveDataLocally(); renderAll(); closeModal('settings-modal'); showToast("✅ 명단이 엑셀 파일 기준으로 최신화되었습니다!");
+            } else { showToast("❌ 이 반은 아직 등록된 기본 명단이 없습니다."); }
+        };
+
+        window.saveTeacherPassword = () => {
+            const newPw = document.getElementById('new-teacher-password-input').value.trim();
+            if(newPw) { window.appData[window.currentClass].teacherPassword = newPw; saveDataLocally(); showToast("교사 비밀번호가 변경되었습니다."); closeModal('teacher-password-modal'); }
+        };
+
+        window.savePassword = () => {
+            window.appData[window.currentClass].password = document.getElementById('new-password-input').value.trim();
+            saveDataLocally(); showToast("반 비밀번호가 설정되었습니다."); closeModal('password-modal');
+        };
+
+        window.onload = init;
+
+    </script>
+</body>
+</html>
