@@ -74,6 +74,7 @@
         
         <input type="text" id="login-name" placeholder="본인 이름 (예: 홍길동)" class="w-full max-w-xs px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
         
+        <!-- 비밀번호가 설정된 반에만 보이도록 hidden 처리 -->
         <div id="login-password-container" class="hidden w-full max-w-xs flex-col items-center">
             <input type="password" id="login-password" placeholder="반 비밀번호 입력" class="w-full px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
         </div>
@@ -182,6 +183,7 @@
                 <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-200 flex flex-col items-center overflow-y-auto">
                     <div class="flex justify-between items-center w-full mb-1">
                         <h2 class="font-jua text-2xl text-violet-900 flex items-center gap-2">🚌 버스 자리</h2>
+                        <!-- 교사 모드 전용 버튼들 (엑셀 버튼 확실히 포함됨) -->
                         <div id="bus-admin-btns" class="flex gap-1 hidden">
                             <button onclick="exportIcebreakerToCSV()" class="bg-green-500 text-white px-2.5 py-1.5 rounded-full font-jua shadow-sm text-xs flex items-center gap-1 hover:bg-green-600">📊 엑셀</button>
                             <button onclick="clearBusSeats()" class="bg-red-50 text-red-500 px-2.5 py-1.5 rounded-full font-bold shadow-sm text-xs flex items-center gap-1 hover:bg-red-100 border border-red-100">초기화</button>
@@ -275,7 +277,6 @@
         </nav>
     </div>
 
-    
     <!-- 사진 콘테스트 제목 수정 모달 -->
     <div id="contest-edit-modal" class="modal-overlay z-[60]">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
@@ -289,6 +290,7 @@
         </div>
     </div>
 
+    <!-- 사진 콘테스트 업로드 모달 -->
     <div id="contest-upload-modal" class="modal-overlay z-[60]">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500 flex flex-col max-h-[90vh]">
             <h3 class="text-2xl font-jua text-violet-900 mb-2">📸 사진 제목 입력</h3>
@@ -304,6 +306,7 @@
         </div>
     </div>
 
+    <!-- 학생 추가 모달 -->
     <div id="student-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-sm max-h-[80vh] flex flex-col overflow-hidden">
             <div class="bg-violet-600 px-5 py-4 flex justify-between items-center shrink-0">
@@ -320,6 +323,7 @@
         </div>
     </div>
 
+    <!-- 빙고 액션 모달 -->
     <div id="bingo-action-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-xs p-6 text-center">
             <h3 class="text-2xl font-jua text-violet-900 mb-2">인증 사진 관리</h3>
@@ -334,6 +338,7 @@
         </div>
     </div>
 
+    <!-- 교사 인증 모달 -->
     <div id="teacher-auth-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
             <h3 class="text-2xl font-jua text-violet-900 mb-2">👨‍🏫 선생님 인증</h3>
@@ -376,6 +381,7 @@
         </div>
     </div>
 
+    <!-- 교사 비밀번호 변경 모달 -->
     <div id="teacher-password-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-amber-500">
             <h3 class="text-2xl font-jua text-amber-900 mb-2">교사 비밀번호 변경</h3>
@@ -388,6 +394,7 @@
         </div>
     </div>
 
+    <!-- 반 비밀번호 설정 모달 -->
     <div id="password-modal" class="modal-overlay z-50">
         <div class="bg-white rounded-3xl shadow-2xl w-10/12 max-w-sm p-6 text-center border-4 border-violet-500">
             <h3 class="text-2xl font-jua text-violet-900 mb-2">반 비밀번호 설정</h3>
@@ -467,8 +474,8 @@
 
     <script type="module">
         
-        // ★★★ 여기에 구글 앱스 스크립트 웹앱 주소를 넣으세요! ★★★
-        const SERVER_URL = "https://script.google.com/macros/s/AKfycbzRR-ETDTw7Wta6IK2mqgJzC5bYLUJd_S802T3i3CTH_dx0HxIo8INb0YRu09b_GfhR/exec"; 
+        // ★★★ 여기에 구글 앱스 스크립트 웹앱 주소(배포 주소)를 넣으세요! ★★★
+        const SERVER_URL = "https://script.google.com/macros/s/AKfycbzQq4NzpDippClRQX3CTq1OOKak2djcNX1OO-KimpODeV9JWtrA67w20d8BUT7S7eIM/exec"; 
 
         window.appData = {}; 
         window.currentClass = null;
@@ -490,7 +497,7 @@
             { icon: '💦', text: '젖은 모습' }, { icon: '🐾', text: '동물 셀카' }, { icon: '👯', text: '똑같은 포즈' }, { icon: '👑', text: '조장 몰아주기' }
         ];
 
-        // 🌟 최신화된 학생 명단 (전출, 유예, 불참 완벽 제외)
+        // 🌟 최신화된 학생 명단 (전출, 유예, 불참 완벽 제외됨)
         const ROSTERS = {
             "2-1": ["김지민","신태희","신현미","안해빈","윤현서","이가흔","이다은","이시우","이예은","전하린","조수아","최서아","한다연","강지훈","고승민","곽도훈","김도경","김준범","나윤오","배다니엘","손권휘","심지민","이상현","임현서","한지완","허정우","황하준"],
             "2-2": ["김가윤","김규린","김채원","김태연","나윤서","신하린","안성연","안예빈","오연우","이진명","이하늬","최영주","하다은","고민서","김오현","김우빈","김우찬","김주현","김준서","김태완","민규홍","신이준","임태율","전율","정창근","허태준"],
@@ -517,7 +524,8 @@
             if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
 
             if(SERVER_URL.trim() !== "") {
-                document.getElementById('sync-status').innerText = "☁️ 로딩중...";
+                const syncEl = document.getElementById('sync-status');
+                if(syncEl) syncEl.innerText = "☁️ 로딩중...";
                 try {
                     const res = await fetch(SERVER_URL + "?api=data");
                     const serverData = await res.json();
@@ -534,10 +542,10 @@
                             }
                         }
                     }
-                    document.getElementById('sync-status').innerText = "☁️ 서버 연결됨";
+                    if(syncEl) syncEl.innerText = "☁️ 서버 연결됨";
                 } catch(err) {
                     console.log("서버 연결 실패", err);
-                    document.getElementById('sync-status').innerText = "📱 오프라인 모드";
+                    if(syncEl) syncEl.innerText = "📱 오프라인 모드";
                 }
             }
 
@@ -549,12 +557,14 @@
             }
 
             const grid = document.getElementById('class-grid');
-            for(let i=1; i<=12; i++) {
-                const btn = document.createElement('button');
-                btn.className = "bg-violet-50 text-violet-700 border border-violet-200 font-jua text-lg py-3 rounded-2xl shadow-sm hover:bg-violet-100 transition";
-                btn.innerText = `2-${i}`;
-                btn.onclick = () => attemptEnterClass(`2-${i}`);
-                grid.appendChild(btn);
+            if(grid) {
+                for(let i=1; i<=12; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = "bg-violet-50 text-violet-700 border border-violet-200 font-jua text-lg py-3 rounded-2xl shadow-sm hover:bg-violet-100 transition";
+                    btn.innerText = `2-${i}`;
+                    btn.onclick = () => attemptEnterClass(`2-${i}`);
+                    grid.appendChild(btn);
+                }
             }
         }
 
@@ -564,19 +574,20 @@
                 localStorage.setItem(`everland_${window.currentClass}`, JSON.stringify(window.appData[window.currentClass]));
             }
             if(SERVER_URL.trim() === "") return;
-            document.getElementById('sync-status').innerText = "☁️ 동기화 중...";
+            const syncEl = document.getElementById('sync-status');
+            if(syncEl) syncEl.innerText = "☁️ 동기화 중...";
             
             clearTimeout(saveTimer);
             saveTimer = setTimeout(async () => {
                 try {
                     await fetch(SERVER_URL, { 
                         method: 'POST', 
-                        headers: { 'Content-Type': 'text/plain' }, // CORS 회피용 헤더
+                        headers: { 'Content-Type': 'text/plain' }, 
                         body: JSON.stringify(window.appData) 
                     });
-                    document.getElementById('sync-status').innerText = "☁️ 서버 연결됨";
+                    if(syncEl) syncEl.innerText = "☁️ 서버 연결됨";
                 } catch(e) {
-                    document.getElementById('sync-status').innerText = "📱 저장 지연";
+                    if(syncEl) syncEl.innerText = "📱 저장 지연";
                 }
             }, 1500); 
         }
@@ -593,30 +604,61 @@
         };
 
         window.showView = (viewName) => {
-            ['home', 'login', 'main'].forEach(v => document.getElementById(`view-${v}`).classList.add('hidden-view'));
-            document.getElementById(`view-${viewName}`).classList.remove('hidden-view');
+            ['home', 'login', 'main'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if(el) el.classList.add('hidden-view');
+            });
+            
+            const targetView = document.getElementById(`view-${viewName}`);
+            if(targetView) targetView.classList.remove('hidden-view');
+            
             if(viewName === 'home') {
                 window.currentClass = null;
                 window.isTeacher = false;
-                document.getElementById('teacher-mode-badge').classList.add('hidden');
-                document.getElementById('nav-contest').classList.add('hidden');
-                document.getElementById('nav-contest').classList.remove('flex');
+                const badge = document.getElementById('teacher-mode-badge');
+                if(badge) badge.classList.add('hidden');
+                
+                const navContest = document.getElementById('nav-contest');
+                if(navContest) {
+                    navContest.classList.add('hidden');
+                    navContest.classList.remove('flex');
+                }
             }
         };
 
         window.attemptEnterClass = (cName) => {
             window.currentClass = cName;
-            document.getElementById('login-title').innerText = `${cName} 입장`;
-            document.getElementById('login-name').value = '';
-            document.getElementById('login-password').value = '';
+            
+            const titleEl = document.getElementById('login-title');
+            if(titleEl) titleEl.innerText = `${cName} 입장`;
+            
+            const nameEl = document.getElementById('login-name');
+            if(nameEl) nameEl.value = '';
+            
+            const pwEl = document.getElementById('login-password');
+            if(pwEl) pwEl.value = '';
+            
+            // 비밀번호 설정 여부에 따라 비밀번호 입력창 표시/숨김 처리 (에러 방지용)
+            const pwContainer = document.getElementById('login-password-container');
+            if(pwContainer) {
+                if(window.appData[cName] && window.appData[cName].password && window.appData[cName].password.trim() !== '') {
+                    pwContainer.classList.remove('hidden');
+                    pwContainer.classList.add('flex');
+                } else {
+                    pwContainer.classList.add('hidden');
+                    pwContainer.classList.remove('flex');
+                }
+            }
+            
             showView('login');
         };
 
         window.loginClass = () => {
-            const name = document.getElementById('login-name').value.trim();
+            const nameEl = document.getElementById('login-name');
+            const name = nameEl ? nameEl.value.trim() : '';
             if(!name) return showToast("본인의 이름을 반드시 입력해주세요!");
             
-            // ★ 서민지 선생님 마스터키 (비번 무시하고 통과)
+            // ★ 서민지 선생님 마스터키
             if(name === "서민지") {
                 window.currentUser = name;
                 addLog(`총괄 선생님이 마스터 권한으로 접속했습니다.`);
@@ -624,7 +666,8 @@
             }
 
             if(window.appData[window.currentClass].password) {
-                const pw = document.getElementById('login-password').value;
+                const pwEl = document.getElementById('login-password');
+                const pw = pwEl ? pwEl.value : '';
                 if(window.appData[window.currentClass].password !== pw) {
                     return showToast("❌ 반 비밀번호가 틀렸습니다.");
                 }
@@ -637,19 +680,24 @@
 
         async function enterClass() {
             showView('main');
-            document.getElementById('header-class-name').innerText = window.currentClass;
+            const headerEl = document.getElementById('header-class-name');
+            if(headerEl) headerEl.innerText = window.currentClass;
             switchTab('groups');
         }
 
         window.switchTab = (tabName) => {
             activeTab = tabName;
             ['groups', 'map', 'bingo', 'bus', 'meeting', 'contest'].forEach(t => {
-                document.getElementById(`tab-${t}`).classList.add('hidden-view');
+                const tabEl = document.getElementById(`tab-${t}`);
+                if(tabEl) tabEl.classList.add('hidden-view');
                 const navBtn = document.getElementById(`nav-${t}`);
                 if(navBtn) navBtn.classList.remove('active');
             });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden-view');
-            document.getElementById(`nav-${tabName}`).classList.add('active');
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if(targetTab) targetTab.classList.remove('hidden-view');
+            
+            const targetNav = document.getElementById(`nav-${tabName}`);
+            if(targetNav) targetNav.classList.add('active');
             
             renderAll(); 
         };
@@ -670,14 +718,15 @@
             const btnAddGroup = document.getElementById('btn-add-group');
             
             if(window.isTeacher) {
-                addStudentCard.classList.remove('hidden');
-                btnAddGroup.classList.remove('hidden');
+                if(addStudentCard) addStudentCard.classList.remove('hidden');
+                if(btnAddGroup) btnAddGroup.classList.remove('hidden');
             } else {
-                addStudentCard.classList.add('hidden');
-                btnAddGroup.classList.add('hidden');
+                if(addStudentCard) addStudentCard.classList.add('hidden');
+                if(btnAddGroup) btnAddGroup.classList.add('hidden');
             }
 
             const container = document.getElementById('groups-container');
+            if(!container) return;
             container.innerHTML = '';
             
             data.groups.forEach((group, gIdx) => {
@@ -729,10 +778,11 @@
 
         window.addStudents = () => {
             if(!window.isTeacher) return;
-            const val = document.getElementById('student-input').value.trim();
+            const inputEl = document.getElementById('student-input');
+            const val = inputEl ? inputEl.value.trim() : '';
             if(!val) return;
             val.split(',').forEach(n => { if(n.trim()) window.appData[window.currentClass].students.push(n.trim()); });
-            document.getElementById('student-input').value = '';
+            if(inputEl) inputEl.value = '';
             saveDataLocally(); renderGroups();
         };
 
@@ -758,6 +808,7 @@
             const unassigned = data.students.filter(s => !assigned.includes(s));
             
             const listDiv = document.getElementById('unassigned-students-list');
+            if(!listDiv) return;
             listDiv.innerHTML = unassigned.length === 0 ? '<div class="col-span-2 text-center py-6 text-sm text-red-500 font-bold bg-white rounded-xl">남은 학생이 없습니다!</div>' : '';
             
             unassigned.forEach(name => {
@@ -768,10 +819,12 @@
                     const idx = selectedStudentsForAdd.indexOf(name);
                     if(idx > -1) {
                         selectedStudentsForAdd.splice(idx, 1);
-                        btn.classList.replace('border-violet-500', 'border-gray-200'); btn.classList.remove('bg-violet-50', 'text-violet-700');
+                        btn.classList.remove('border-violet-500', 'bg-violet-50', 'text-violet-700'); 
+                        btn.classList.add('border-gray-200');
                     } else {
                         selectedStudentsForAdd.push(name);
-                        btn.classList.replace('border-gray-200', 'border-violet-500'); btn.classList.add('bg-violet-50', 'text-violet-700');
+                        btn.classList.remove('border-gray-200'); 
+                        btn.classList.add('border-violet-500', 'bg-violet-50', 'text-violet-700');
                     }
                 };
                 listDiv.appendChild(btn);
@@ -796,8 +849,10 @@
             reader.onload = (event) => {
                 customMapImage = event.target.result;
                 const img = document.getElementById('map-image');
-                img.src = customMapImage; img.style.display = 'block';
-                document.getElementById('map-upload-ui').classList.replace('flex', 'hidden');
+                if(img) { img.src = customMapImage; img.style.display = 'block'; }
+                
+                const mapUi = document.getElementById('map-upload-ui');
+                if(mapUi) { mapUi.classList.remove('flex'); mapUi.classList.add('hidden'); }
                 renderMap();
             };
             reader.readAsDataURL(file);
@@ -806,6 +861,7 @@
         window.renderMap = () => {
             const data = window.appData[window.currentClass];
             const gSelect = document.getElementById('map-group-select');
+            if(!gSelect) return;
             gSelect.innerHTML = '';
             
             let myGroupIdx = -1;
@@ -821,6 +877,7 @@
             }
 
             const layer = document.getElementById('map-markers-layer');
+            if(!layer) return;
             layer.innerHTML = '<div class="absolute top-2 left-2 right-2 bg-white/95 backdrop-blur p-3 rounded-2xl shadow-lg border border-violet-200 text-xs pointer-events-auto flex flex-col gap-2 max-h-40 overflow-y-auto" id="map-status-box"><div class="font-jua text-violet-900 border-b-2 border-violet-100 pb-1 text-base sticky top-0 bg-white/95 z-10 flex justify-between"><span>📍 위치 현황판</span><span class="text-[10px] text-gray-400 font-normal pt-1">실시간</span></div></div>';
             const statusBox = document.getElementById('map-status-box');
             
@@ -840,8 +897,10 @@
         };
 
         window.updateLocation = () => {
-            const gIdx = document.getElementById('map-group-select').value;
-            const loc = document.getElementById('map-location-select').value;
+            const gSelect = document.getElementById('map-group-select');
+            const locSelect = document.getElementById('map-location-select');
+            const gIdx = gSelect ? gSelect.value : "";
+            const loc = locSelect ? locSelect.value : "";
             if(gIdx === "" || !loc) return showToast("⚠ 모둠과 구역을 선택하세요.");
             
             const now = new Date();
@@ -850,12 +909,16 @@
             window.appData[window.currentClass].groups[gIdx].locTime = timeStr; 
             
             addLog(`[위치보고] ${window.appData[window.currentClass].groups[gIdx].name} -> ${loc} (${timeStr})`);
-            saveDataLocally(); document.getElementById('map-location-select').value = ''; renderMap(); showToast(`📍 [${timeStr}] 위치 등록 완료!`);
+            saveDataLocally(); 
+            if(locSelect) locSelect.value = ''; 
+            renderMap(); 
+            showToast(`📍 [${timeStr}] 위치 등록 완료!`);
         };
 
         let currentBingoCell = null;
         window.updateBingoSelect = () => {
             const sel = document.getElementById('bingo-group-select');
+            if(!sel) return;
             const data = window.appData[window.currentClass];
             sel.innerHTML = '';
             
@@ -874,8 +937,10 @@
 
         window.renderBingo = () => {
             const grid = document.getElementById('bingo-grid');
+            const sel = document.getElementById('bingo-group-select');
+            if(!grid || !sel) return;
             grid.innerHTML = '';
-            const gIdx = document.getElementById('bingo-group-select').value;
+            const gIdx = sel.value;
             
             if(gIdx === "") { grid.innerHTML = '<div class="col-span-4 py-10 text-center font-bold text-gray-400">모둠을 선택하거나 소속되어야 합니다.</div>'; return; }
             
@@ -926,20 +991,26 @@
             const file = e.target.files[0];
             if(!file) return;
             compressImage(file, (base64) => {
-                const gIdx = document.getElementById('bingo-group-select').value;
+                const sel = document.getElementById('bingo-group-select');
+                if(!sel) return;
+                const gIdx = sel.value;
                 window.appData[window.currentClass].groups[gIdx].bingos[cellIdx] = base64;
                 addLog(`[빙고] ${window.appData[window.currentClass].groups[gIdx].name} 빙고 사진을 올렸습니다.`);
                 saveDataLocally(); renderBingo();
             });
         };
 
-        document.getElementById('bingo-reupload-input').onchange = (e) => {
-            if(currentBingoCell !== null) { handleBingoUpload(e, currentBingoCell); closeModal('bingo-action-modal'); }
-        };
+        const reuploadInput = document.getElementById('bingo-reupload-input');
+        if(reuploadInput) {
+            reuploadInput.onchange = (e) => {
+                if(currentBingoCell !== null) { handleBingoUpload(e, currentBingoCell); closeModal('bingo-action-modal'); }
+            };
+        }
 
         window.deleteBingoImage = () => {
-            if(currentBingoCell !== null) {
-                window.appData[window.currentClass].groups[document.getElementById('bingo-group-select').value].bingos[currentBingoCell] = null;
+            const sel = document.getElementById('bingo-group-select');
+            if(currentBingoCell !== null && sel) {
+                window.appData[window.currentClass].groups[sel.value].bingos[currentBingoCell] = null;
                 addLog('[빙고] 빙고 사진을 취소했습니다.');
                 saveDataLocally(); renderBingo(); closeModal('bingo-action-modal');
             }
@@ -948,11 +1019,16 @@
         window.renderBus = () => {
             const container = document.getElementById('bus-grid-container');
             const adminBtns = document.getElementById('bus-admin-btns');
+            if(!container) return;
+            
             const data = window.appData[window.currentClass];
             if(!data.busSeats) data.busSeats = {};
 
-            if(window.isTeacher) adminBtns.classList.remove('hidden');
-            else adminBtns.classList.add('hidden');
+            if(window.isTeacher) {
+                if(adminBtns) adminBtns.classList.remove('hidden');
+            } else {
+                if(adminBtns) adminBtns.classList.add('hidden');
+            }
 
             let html = '<div class="grid grid-cols-[1fr_1fr_24px_1fr_1fr] gap-x-1.5 gap-y-2 mb-2">';
             html += `<div class="bg-slate-300 text-slate-700 rounded-lg flex items-center justify-center text-[10px] font-bold py-2 shadow-inner">운전석</div><div></div><div class="text-[9px] text-gray-400 flex items-center justify-center"></div><div class="bg-slate-300 text-slate-700 rounded-lg flex items-center justify-center text-[10px] font-bold py-2 shadow-inner">출입구</div><div></div>`;
@@ -986,8 +1062,11 @@
             html += '<div class="bg-red-50 border border-red-200 text-red-500 text-center text-xs py-2 rounded-xl font-bold mt-3 tracking-wide">🚫 맨 뒷좌석 제외 (위험)</div>';
 
             container.innerHTML = html;
-            document.getElementById('bus-assigned-count').innerText = `✅ 탑승완료: ${seatedCount}명`;
-            document.getElementById('bus-unassigned-count').innerText = `❌ 미탑승: ${data.students.length - seatedCount}명`;
+            
+            const assignedCount = document.getElementById('bus-assigned-count');
+            const unassignedCount = document.getElementById('bus-unassigned-count');
+            if(assignedCount) assignedCount.innerText = `✅ 탑승완료: ${seatedCount}명`;
+            if(unassignedCount) unassignedCount.innerText = `❌ 미탑승: ${data.students.length - seatedCount}명`;
         };
 
         window.openBusSeatModal = (seatId) => {
@@ -1000,29 +1079,33 @@
             if (!data.icebreakers) data.icebreakers = {}; 
             
             const listDiv = document.getElementById('bus-student-list');
-            listDiv.innerHTML = '';
+            if(listDiv) listDiv.innerHTML = '';
+            
             const icebreakerSection = document.getElementById('bus-icebreaker-section');
             const adminListContainer = document.getElementById('bus-admin-list-container');
             const headerTitle = document.getElementById('bus-modal-header-title');
 
-            if(window.isTeacher) adminListContainer.classList.remove('hidden');
-            else adminListContainer.classList.add('hidden');
+            if(window.isTeacher) {
+                if(adminListContainer) adminListContainer.classList.remove('hidden');
+            } else {
+                if(adminListContainer) adminListContainer.classList.add('hidden');
+            }
             
             if (occupant && !['담임', '부담임', '예비', '공석'].includes(occupant)) {
                 currentOccupantForIcebreaker = occupant;
-                icebreakerSection.classList.remove('hidden');
-                headerTitle.innerText = `${occupant} 짝꿍 알아보기`;
+                if(icebreakerSection) icebreakerSection.classList.remove('hidden');
+                if(headerTitle) headerTitle.innerText = `${occupant} 짝꿍 알아보기`;
                 const answers = data.icebreakers[occupant] || { q1: '', q2: '', q3: '' };
-                document.getElementById('ib-q1').value = answers.q1 || '';
-                document.getElementById('ib-q2').value = answers.q2 || '';
-                document.getElementById('ib-q3').value = answers.q3 || '';
+                const q1 = document.getElementById('ib-q1'); if(q1) q1.value = answers.q1 || '';
+                const q2 = document.getElementById('ib-q2'); if(q2) q2.value = answers.q2 || '';
+                const q3 = document.getElementById('ib-q3'); if(q3) q3.value = answers.q3 || '';
             } else {
                 currentOccupantForIcebreaker = null;
                 if(icebreakerSection) icebreakerSection.classList.add('hidden');
-                headerTitle.innerText = `💺 버스 좌석 관리`;
+                if(headerTitle) headerTitle.innerText = `💺 버스 좌석 관리`;
             }
             
-            if(window.isTeacher) {
+            if(window.isTeacher && listDiv) {
                 ['담임', '부담임', '예비', '공석'].forEach(sp => {
                     const isSelected = data.busSeats[seatId] === sp;
                     const btnClass = isSelected ? "p-2 bg-slate-300 text-slate-800 rounded-xl font-bold text-sm shadow-inner" : "p-2 bg-slate-100 text-slate-700 rounded-xl font-bold border border-slate-200 text-sm hover:bg-slate-200";
@@ -1047,10 +1130,14 @@
             if(!currentOccupantForIcebreaker) return;
             const data = window.appData[window.currentClass];
             if (!data.icebreakers) data.icebreakers = {};
+            const q1 = document.getElementById('ib-q1');
+            const q2 = document.getElementById('ib-q2');
+            const q3 = document.getElementById('ib-q3');
+            
             data.icebreakers[currentOccupantForIcebreaker] = {
-                q1: document.getElementById('ib-q1').value.trim(),
-                q2: document.getElementById('ib-q2').value.trim(),
-                q3: document.getElementById('ib-q3').value.trim()
+                q1: q1 ? q1.value.trim() : '',
+                q2: q2 ? q2.value.trim() : '',
+                q3: q3 ? q3.value.trim() : ''
             };
             addLog(`[버스] ${currentOccupantForIcebreaker} 짝꿍 질문지를 작성했습니다.`);
             saveDataLocally(); showToast("✅ 질문지가 저장되었습니다!");
@@ -1097,7 +1184,7 @@
             }
             addLog(`버스 좌석을 전체 랜덤 배정했습니다.`);
             saveDataLocally(); renderBus(); 
-            showToast("🔀 모든 학생이 흩어져서 랜덤 배치되었습니다!");
+            showToast("🔀 모든 학생이 랜덤 배치되었습니다!");
         };
 
         window.exportIcebreakerToCSV = () => {
@@ -1187,8 +1274,12 @@
             compressImage(file, (base64) => {
                 pendingContestPhoto = base64;
                 const previewImg = document.getElementById('contest-upload-preview');
-                previewImg.src = base64; previewImg.classList.remove('hidden');
-                document.getElementById('contest-photo-title').value = '';
+                if(previewImg) {
+                    previewImg.src = base64; 
+                    previewImg.classList.remove('hidden');
+                }
+                const titleInput = document.getElementById('contest-photo-title');
+                if(titleInput) titleInput.value = '';
                 openModal('contest-upload-modal');
             });
             e.target.value = ''; 
@@ -1197,28 +1288,36 @@
         window.cancelContestUpload = () => { pendingContestPhoto = null; closeModal('contest-upload-modal'); };
         window.confirmContestUpload = () => {
             if(!pendingContestPhoto) return;
-            const title = document.getElementById('contest-photo-title').value.trim() || '제목 없음';
+            const titleInput = document.getElementById('contest-photo-title');
+            const title = titleInput ? titleInput.value.trim() : '제목 없음';
             const now = new Date(); const timeStr = `${now.getHours()}시 ${now.getMinutes()}분`;
             if(!window.appData.sharedContestPhotos) window.appData.sharedContestPhotos = [];
-            window.appData.sharedContestPhotos.unshift({ url: pendingContestPhoto, title: title, time: timeStr, uploader: `${window.currentClass} ${window.currentUser}` });
-            addLog(`콘테스트에 [${title}] 사진을 등록했습니다.`);
+            window.appData.sharedContestPhotos.unshift({ url: pendingContestPhoto, title: title || '제목 없음', time: timeStr, uploader: `${window.currentClass} ${window.currentUser}` });
+            addLog(`콘테스트에 [${title || '제목 없음'}] 사진을 등록했습니다.`);
             saveDataLocally(); renderContest(); closeModal('contest-upload-modal'); showToast("📸 공유 사진 업로드 완료!");
             pendingContestPhoto = null;
         };
+        
         window.deleteContestPhoto = (idx) => {
             window.appData.sharedContestPhotos.splice(idx, 1);
             addLog(`콘테스트 사진을 삭제했습니다.`);
             saveDataLocally(); renderContest(); showToast("🗑️ 사진이 삭제되었습니다.");
         };
+        
         window.openEditContestTitle = (idx) => {
             const currentTitle = window.appData.sharedContestPhotos[idx].title;
-            document.getElementById('contest-edit-idx').value = idx;
-            document.getElementById('contest-edit-title').value = currentTitle;
+            const idxInput = document.getElementById('contest-edit-idx');
+            const titleInput = document.getElementById('contest-edit-title');
+            if(idxInput) idxInput.value = idx;
+            if(titleInput) titleInput.value = currentTitle;
             openModal('contest-edit-modal');
         };
+        
         window.confirmEditContestTitle = () => {
-            const idx = document.getElementById('contest-edit-idx').value;
-            const newTitle = document.getElementById('contest-edit-title').value.trim();
+            const idxInput = document.getElementById('contest-edit-idx');
+            const titleInput = document.getElementById('contest-edit-title');
+            const idx = idxInput ? idxInput.value : '';
+            const newTitle = titleInput ? titleInput.value.trim() : '';
             if(newTitle && idx !== "") {
                 window.appData.sharedContestPhotos[idx].title = newTitle;
                 addLog(`콘테스트 사진 제목을 [${newTitle}]으로 수정했습니다.`);
@@ -1226,39 +1325,73 @@
             }
         };
 
-        window.openModal = (id) => document.getElementById(id).classList.add('active');
-        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+        window.openModal = (id) => {
+            const el = document.getElementById(id);
+            if(el) el.classList.add('active');
+        };
+        window.closeModal = (id) => {
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('active');
+        };
         
         let toastTimer;
         window.showToast = (msg) => {
             const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
+            const toastMsg = document.getElementById('toast-msg');
+            if(!toast || !toastMsg) return;
+            toastMsg.innerText = msg;
             toast.classList.remove('opacity-0', 'pointer-events-none');
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => { toast.classList.add('opacity-0', 'pointer-events-none'); }, 2000);
         };
 
-        window.openTeacherAuth = () => { document.getElementById('teacher-auth-input').value = ''; openModal('teacher-auth-modal'); };
+        window.openTeacherAuth = () => { 
+            const authInput = document.getElementById('teacher-auth-input');
+            if(authInput) authInput.value = ''; 
+            openModal('teacher-auth-modal'); 
+        };
+        
         window.verifyTeacher = () => {
-            const input = document.getElementById('teacher-auth-input').value;
+            const authInput = document.getElementById('teacher-auth-input');
+            const input = authInput ? authInput.value : '';
             if(input === '0000' || input === window.appData[window.currentClass].teacherPassword) {
                 if(input === '0000') window.appData[window.currentClass].teacherPassword = '0000'; 
                 window.isTeacher = true; 
-                document.getElementById('teacher-mode-badge').classList.remove('hidden');
-                document.getElementById('nav-contest').classList.remove('hidden'); document.getElementById('nav-contest').classList.add('flex');
+                const badge = document.getElementById('teacher-mode-badge');
+                if(badge) badge.classList.remove('hidden');
+                
+                const navContest = document.getElementById('nav-contest');
+                if(navContest) {
+                    navContest.classList.remove('hidden'); 
+                    navContest.classList.add('flex');
+                }
+                
                 saveDataLocally(); closeModal('teacher-auth-modal'); openModal('settings-modal'); renderAll(); showToast("👨‍🏫 교사 권한이 활성화되었습니다!");
-            } else { showToast("❌ 비밀번호가 틀렸습니다."); }
+            } else { 
+                showToast("❌ 비밀번호가 틀렸습니다."); 
+            }
         };
 
         window.exitTeacherMode = () => {
             window.isTeacher = false;
-            document.getElementById('teacher-mode-badge').classList.add('hidden');
-            document.getElementById('nav-contest').classList.add('hidden'); document.getElementById('nav-contest').classList.remove('flex');
-            if(activeTab === 'contest') switchTab('groups'); renderAll(); showToast("교사 모드가 종료되었습니다.");
+            const badge = document.getElementById('teacher-mode-badge');
+            if(badge) badge.classList.add('hidden');
+            
+            const navContest = document.getElementById('nav-contest');
+            if(navContest) {
+                navContest.classList.add('hidden'); 
+                navContest.classList.remove('flex');
+            }
+            
+            if(activeTab === 'contest') switchTab('groups'); 
+            renderAll(); 
+            showToast("교사 모드가 종료되었습니다.");
         };
 
         window.openLogsModal = () => {
-            const container = document.getElementById('logs-container'); container.innerHTML = '';
+            const container = document.getElementById('logs-container'); 
+            if(!container) return;
+            container.innerHTML = '';
             const logs = window.appData[window.currentClass].logs || [];
             if(logs.length === 0) { container.innerHTML = '<div class="text-center text-gray-400 font-bold mt-10">아직 활동 기록이 없습니다.</div>'; } 
             else {
@@ -1283,12 +1416,14 @@
         };
 
         window.saveTeacherPassword = () => {
-            const newPw = document.getElementById('new-teacher-password-input').value.trim();
+            const pwInput = document.getElementById('new-teacher-password-input');
+            const newPw = pwInput ? pwInput.value.trim() : '';
             if(newPw) { window.appData[window.currentClass].teacherPassword = newPw; saveDataLocally(); showToast("교사 비밀번호가 변경되었습니다."); closeModal('teacher-password-modal'); }
         };
 
         window.savePassword = () => {
-            window.appData[window.currentClass].password = document.getElementById('new-password-input').value.trim();
+            const pwInput = document.getElementById('new-password-input');
+            if(pwInput) window.appData[window.currentClass].password = pwInput.value.trim();
             saveDataLocally(); showToast("반 비밀번호가 설정되었습니다."); closeModal('password-modal');
         };
 
