@@ -74,7 +74,6 @@
         
         <input type="text" id="login-name" placeholder="본인 이름 (예: 홍길동)" class="w-full max-w-xs px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
         
-        <!-- 비밀번호가 설정된 반에만 보이도록 hidden 처리 -->
         <div id="login-password-container" class="hidden w-full max-w-xs flex-col items-center">
             <input type="password" id="login-password" placeholder="반 비밀번호 입력" class="w-full px-5 py-4 rounded-3xl border-2 border-violet-200 mb-4 text-center text-xl focus:outline-none focus:border-violet-600 font-bold bg-white shadow-sm">
         </div>
@@ -128,9 +127,14 @@
                 <div class="bg-white p-3 rounded-3xl shadow-sm border border-gray-200 flex-1 flex flex-col relative overflow-hidden">
                     <div class="flex justify-between items-center mb-2 px-2">
                         <h2 class="font-jua text-xl text-violet-900 flex items-center gap-2">🗺️ 에버랜드 지도</h2>
-                        <button onclick="openModal('guidebook-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
-                            📖 가이드북
-                        </button>
+                        <div class="flex gap-1">
+                            <button id="btn-reset-locations" onclick="resetLocations()" class="hidden bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm border border-red-100">
+                                🔄 초기화
+                            </button>
+                            <button onclick="openModal('guidebook-modal')" class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm">
+                                📖 가이드북
+                            </button>
+                        </div>
                     </div>
                     
                     <div id="map-container" class="flex-1 bg-gray-100 rounded-2xl relative overflow-hidden border border-gray-200 flex items-center justify-center">
@@ -230,7 +234,11 @@
                         ⏰ 시간: 오후 16시 00분<br>📍 장소: 정문 앞 대형 조형물<br>
                         <span class="text-amber-600 text-base mt-2 block border-t border-amber-200 pt-2 font-jua">🕵️‍♀️ 권유빈 선생님을 찾아라!</span>
                     </p>
-                    <img src="https://postfiles.pstatic.net/MjAyNjEwMTRfNzgg/MDAxNzkxOTM1ODEwNzI5.9UhXwvLQ_QKLhkCrFW_1UDF7AsW88Nj6HNLANfyeZBkg.eJnRWEVxkNqZOIXM-OTemCLHIxLcsNPyJfXJg9OelzMg.PNG/image.png?type=w3840" onerror="this.src='https://placehold.co/400x300/fef3c7/b45309?text=사진+링크+입력필요'" alt="대형 조형물" class="w-full max-w-[280px] rounded-2xl shadow-md border-2 border-amber-200 my-2">
+                    <!-- 네이버 블로그 이미지 호트링크 방지 무력화(referrerpolicy="no-referrer") 추가 -->
+                    <img src="https://postfiles.pstatic.net/MjAyNjEwMTRfNzgg/MDAxNzkxOTM1ODEwNzI5.9UhXwvLQ_QKLhkCrFW_1UDF7AsW88Nj6HNLANfyeZBkg.eJnRWEVxkNqZOIXM-OTemCLHIxLcsNPyJfXJg9OelzMg.PNG/image.png?type=w3840" 
+                         referrerpolicy="no-referrer" 
+                         onerror="this.src='https://placehold.co/400x300/fef3c7/b45309?text=사진+링크+에러'" 
+                         alt="대형 조형물" class="w-full max-w-[280px] rounded-2xl shadow-md border-2 border-amber-200 my-2">
                     <p class="text-xs text-gray-500 font-bold text-center mt-2">미아보호소 근처 글로벌 페어 정문 앞<br>사진 속 대형 조형물 앞에서 모입니다!</p>
                 </div>
             </div>
@@ -497,7 +505,7 @@
             { icon: '💦', text: '젖은 모습' }, { icon: '🐾', text: '동물 셀카' }, { icon: '👯', text: '똑같은 포즈' }, { icon: '👑', text: '조장 몰아주기' }
         ];
 
-        // 🌟 최신화된 학생 명단 (전출, 유예, 불참 완벽 제외됨)
+        // 🌟 최신화된 학생 명단 (결석, 전출, 유예 완벽 제외)
         const ROSTERS = {
             "2-1": ["김지민","신태희","신현미","안해빈","윤현서","이가흔","이다은","이시우","이예은","전하린","조수아","최서아","한다연","강지훈","고승민","곽도훈","김도경","김준범","나윤오","배다니엘","손권휘","심지민","이상현","임현서","한지완","허정우","황하준"],
             "2-2": ["김가윤","김규린","김채원","김태연","나윤서","신하린","안성연","안예빈","오연우","이진명","이하늬","최영주","하다은","고민서","김오현","김우빈","김우찬","김주현","김준서","김태완","민규홍","신이준","임태율","전율","정창근","허태준"],
@@ -638,7 +646,6 @@
             const pwEl = document.getElementById('login-password');
             if(pwEl) pwEl.value = '';
             
-            // 비밀번호 설정 여부에 따라 비밀번호 입력창 표시/숨김 처리 (에러 방지용)
             const pwContainer = document.getElementById('login-password-container');
             if(pwContainer) {
                 if(window.appData[cName] && window.appData[cName].password && window.appData[cName].password.trim() !== '') {
@@ -658,7 +665,7 @@
             const name = nameEl ? nameEl.value.trim() : '';
             if(!name) return showToast("본인의 이름을 반드시 입력해주세요!");
             
-            // ★ 서민지 선생님 마스터키
+            // ★ 서민지 선생님 마스터키 (비번 무시하고 통과)
             if(name === "서민지") {
                 window.currentUser = name;
                 addLog(`총괄 선생님이 마스터 권한으로 접속했습니다.`);
@@ -867,13 +874,17 @@
             let myGroupIdx = -1;
             data.groups.forEach((g, i) => { if(g.members.some(m => m.name === window.currentUser)) myGroupIdx = i; });
 
+            const btnResetLocs = document.getElementById('btn-reset-locations');
+
             if(window.isTeacher) {
                 gSelect.disabled = false;
                 gSelect.innerHTML = '<option value="">모둠 선택</option>';
                 data.groups.forEach((g, i) => gSelect.insertAdjacentHTML('beforeend', `<option value="${i}">${g.name}</option>`));
+                if(btnResetLocs) btnResetLocs.classList.remove('hidden');
             } else {
                 if (myGroupIdx === -1) { gSelect.innerHTML = '<option value="">소속된 모둠이 없습니다</option>'; gSelect.disabled = true; } 
                 else { gSelect.innerHTML = `<option value="${myGroupIdx}">우리 모둠 (${data.groups[myGroupIdx].name})</option>`; gSelect.disabled = true; }
+                if(btnResetLocs) btnResetLocs.classList.add('hidden');
             }
 
             const layer = document.getElementById('map-markers-layer');
@@ -882,18 +893,44 @@
             const statusBox = document.getElementById('map-status-box');
             
             let hasLocs = false;
-            data.groups.forEach(g => {
-                if(g.location) {
-                    hasLocs = true;
-                    const tStr = g.locTime ? `<span class="text-[10px] text-blue-500 font-bold ml-1">(${g.locTime})</span>` : '';
-                    if(window.isTeacher || data.groups.indexOf(g) === myGroupIdx) {
-                        statusBox.insertAdjacentHTML('beforeend', `<div class="bg-violet-50 p-2 rounded-xl border border-violet-100 flex justify-between items-center"><span class="font-bold text-violet-800">${g.name}</span><span class="text-gray-700 font-bold text-[11px]">${g.location} ${tStr}</span></div>`);
-                    } else {
-                         statusBox.insertAdjacentHTML('beforeend', `<div class="bg-gray-50 p-2 rounded-xl border border-gray-100 flex justify-between items-center"><span class="font-bold text-gray-400">${g.name}</span><span class="text-gray-400 font-bold text-[11px]">🔒 비공개</span></div>`);
+            
+            if (window.isTeacher) {
+                const locGroups = {};
+                data.groups.forEach(g => {
+                    if(g.location) {
+                        hasLocs = true;
+                        if(!locGroups[g.location]) locGroups[g.location] = [];
+                        locGroups[g.location].push(g);
+                    }
+                });
+                
+                if(!hasLocs) {
+                    statusBox.insertAdjacentHTML('beforeend', '<div class="text-gray-400 font-bold text-center py-2">보고된 위치가 없습니다.</div>');
+                } else {
+                    for (const loc in locGroups) {
+                        let badges = locGroups[loc].map(g => `<span class="bg-white border border-violet-200 px-2 py-0.5 rounded-md shadow-sm whitespace-nowrap">${g.name} <span class="text-blue-500 text-[9px] font-bold">${g.locTime?.replace('시 ',':').replace('분','')}</span></span>`).join('');
+                        statusBox.insertAdjacentHTML('beforeend', `
+                            <div class="bg-violet-50 p-2 rounded-xl border border-violet-100 flex flex-col gap-1.5">
+                                <span class="font-bold text-violet-900 text-[13px] border-b border-violet-200 pb-1">📍 ${loc}</span>
+                                <div class="flex flex-wrap gap-1 text-[11px] text-gray-700 font-bold">${badges}</div>
+                            </div>
+                        `);
                     }
                 }
-            });
-            if(!hasLocs) statusBox.insertAdjacentHTML('beforeend', '<div class="text-gray-400 font-bold text-center py-2">보고된 위치가 없습니다.</div>');
+            } else {
+                data.groups.forEach(g => {
+                    if(g.location) {
+                        hasLocs = true;
+                        const tStr = g.locTime ? `<span class="text-[10px] text-blue-500 font-bold ml-1">(${g.locTime})</span>` : '';
+                        if(data.groups.indexOf(g) === myGroupIdx) {
+                            statusBox.insertAdjacentHTML('beforeend', `<div class="bg-violet-50 p-2 rounded-xl border border-violet-100 flex justify-between items-center"><span class="font-bold text-violet-800">${g.name}</span><span class="text-gray-700 font-bold text-[11px]">${g.location} ${tStr}</span></div>`);
+                        } else {
+                             statusBox.insertAdjacentHTML('beforeend', `<div class="bg-gray-50 p-2 rounded-xl border border-gray-100 flex justify-between items-center"><span class="font-bold text-gray-400">${g.name}</span><span class="text-gray-400 font-bold text-[11px]">🔒 비공개</span></div>`);
+                        }
+                    }
+                });
+                if(!hasLocs) statusBox.insertAdjacentHTML('beforeend', '<div class="text-gray-400 font-bold text-center py-2">보고된 위치가 없습니다.</div>');
+            }
         };
 
         window.updateLocation = () => {
@@ -913,6 +950,18 @@
             if(locSelect) locSelect.value = ''; 
             renderMap(); 
             showToast(`📍 [${timeStr}] 위치 등록 완료!`);
+        };
+        
+        window.resetLocations = () => {
+            if(!window.isTeacher) return;
+            window.appData[window.currentClass].groups.forEach(g => {
+                g.location = '';
+                g.locTime = '';
+            });
+            addLog(`선생님이 모든 모둠의 위치 기록을 초기화했습니다.`);
+            saveDataLocally();
+            renderMap();
+            showToast("🔄 모든 위치 기록이 초기화되었습니다.");
         };
 
         let currentBingoCell = null;
