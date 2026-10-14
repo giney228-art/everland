@@ -654,10 +654,11 @@
             
             showView('login');
 
-            // 스마트폰 키보드 자동 팝업 처리
-            setTimeout(() => {
-                if(nameEl) nameEl.focus();
-            }, 100);
+            // 🚨 스마트폰 자판 먹통(고스트 포커스) 현상 완벽 해결!
+            // 지연시간(setTimeout)을 삭제하고 버튼 클릭 즉시 포커스를 줘야 모바일 기기가 키보드 입력을 정상적으로 허용합니다.
+            if(nameEl) {
+                nameEl.focus();
+            }
         };
 
         window.loginClass = () => {
